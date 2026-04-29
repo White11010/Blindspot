@@ -1,0 +1,5 @@
+@use 'vuetify/settings' with (
+  $card-item-padding: 0,
+  $card-text-padding: 0,
+  $card-padding: 1.5rem
+);

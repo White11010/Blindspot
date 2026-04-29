@@ -1,0 +1,1 @@
+export {default as ConnectLichessAccount} from './ui/ConnectLichessAccount.vue'

@@ -1,0 +1,1 @@
+export {router} from "@/app/providers/router/routerProvider.ts";

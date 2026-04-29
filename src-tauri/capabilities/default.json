@@ -5,6 +5,13 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "opener:default"
+    "keyring:default",
+    "keyring:allow-set-password",
+    "keyring:allow-get-password",
+    "keyring:allow-delete-password",
+    "keyring:allow-set-secret",
+    "keyring:allow-get-secret",
+    "keyring:allow-delete-secret",
+    "store:default"
   ]
 }

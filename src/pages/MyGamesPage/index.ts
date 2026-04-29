@@ -1,0 +1,1 @@
+export {default as MyGamesPage} from './ui/MyGamesPage.vue'
