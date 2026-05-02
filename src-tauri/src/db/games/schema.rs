@@ -6,45 +6,41 @@ pub fn init_games_table(conn: &Connection) {
         CREATE TABLE IF NOT EXISTS games (
             id TEXT PRIMARY KEY,
 
-            -- чей локальный кабинет / чей sync
             username TEXT NOT NULL,
+            platform TEXT NOT NULL,
 
-            -- базовые свойства партии
             rated INTEGER NOT NULL,
             speed TEXT NOT NULL,
             time_control TEXT NOT NULL,
             created_at INTEGER NOT NULL,
 
-            -- игрок аккаунта
             player_name TEXT NOT NULL,
             player_id TEXT NOT NULL,
 
-            -- оппонент
             opponent_name TEXT NOT NULL,
             opponent_id TEXT NOT NULL,
 
-            -- стороны
             white_name TEXT NOT NULL,
             white_id TEXT NOT NULL,
+
             black_name TEXT NOT NULL,
             black_id TEXT NOT NULL,
 
-            -- рейтинги
             white_rating INTEGER,
             black_rating INTEGER,
+
             player_rating INTEGER,
             opponent_rating INTEGER,
 
-            -- результат
-            winner TEXT,              -- white / black / null(draw)
-            player_color TEXT NOT NULL, -- white / black
-            player_result TEXT NOT NULL, -- win / loss / draw
+            winner TEXT,
+            player_color TEXT NOT NULL,
+            player_result TEXT NOT NULL,
 
-            -- дебют
             opening_eco TEXT,
             opening_name TEXT,
 
-            -- сырье
+            moves TEXT,
+            last_fen TEXT,
             pgn TEXT NOT NULL
         );
 
@@ -54,17 +50,17 @@ pub fn init_games_table(conn: &Connection) {
         CREATE INDEX IF NOT EXISTS idx_games_created_at
         ON games(created_at DESC);
 
+        CREATE INDEX IF NOT EXISTS idx_games_speed
+        ON games(speed);
+
+        CREATE INDEX IF NOT EXISTS idx_games_opening_eco
+        ON games(opening_eco);
+
         CREATE INDEX IF NOT EXISTS idx_games_player_id
         ON games(player_id);
 
         CREATE INDEX IF NOT EXISTS idx_games_opponent_id
         ON games(opponent_id);
-
-        CREATE INDEX IF NOT EXISTS idx_games_opening_eco
-        ON games(opening_eco);
-
-        CREATE INDEX IF NOT EXISTS idx_games_speed
-        ON games(speed);
         ",
     )
     .unwrap();

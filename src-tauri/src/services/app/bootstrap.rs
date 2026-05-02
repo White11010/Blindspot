@@ -1,12 +1,12 @@
 use tauri::AppHandle;
 
-use crate::services::auth;
 use crate::db::{connection::get_conn, users::repository};
+use crate::services::auth;
 
 use super::dto::BootstrapState;
 
 pub async fn bootstrap(app: AppHandle) -> Result<BootstrapState, String> {
-    let token = match auth::load_token(&app)? {
+    match auth::load_token(&app)? {
         Some(t) => t,
         None => {
             return Ok(BootstrapState::Unauthorized);
@@ -23,10 +23,16 @@ pub async fn bootstrap(app: AppHandle) -> Result<BootstrapState, String> {
             }
         });
 
-        return Ok(BootstrapState::Authorized { user, is_stale: true });
+        return Ok(BootstrapState::Authorized {
+            user,
+            is_stale: true,
+        });
     }
 
     let user = crate::services::users::sync_user(app).await?;
 
-    Ok(BootstrapState::Authorized { user, is_stale: false })
+    Ok(BootstrapState::Authorized {
+        user,
+        is_stale: false,
+    })
 }

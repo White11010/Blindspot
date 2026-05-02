@@ -1,17 +1,18 @@
-import { invoke } from "@tauri-apps/api/core";
-import { defineStore } from "pinia";
+import { invoke } from '@tauri-apps/api/core';
+import { defineStore } from 'pinia';
 
-export const useGamesStore = defineStore("games", {
+export const useGamesStore = defineStore('games', {
   state: () => ({
     games: [],
     loading: false,
   }),
 
   actions: {
-    async sync(username: string) {
+    async sync() {
       this.loading = true;
-      await invoke("sync_lichess_games", { username });
-      this.games = await invoke("get_games", { username });
+      await invoke('sync_games');
+      const games = await invoke('get_games');
+      this.games = games;
       this.loading = false;
     },
   },

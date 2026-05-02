@@ -1,3 +1,4 @@
-// pub mod games;
-pub mod users;
 pub mod connection;
+pub mod games;
+pub mod insights;
+pub mod users;

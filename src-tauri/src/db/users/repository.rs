@@ -46,16 +46,12 @@ pub fn upsert_user(conn: &Connection, user: &User) -> Result<(), String> {
             user.id,
             user.platform,
             user.username,
-
             user.bullet_rating,
             user.bullet_games,
-
             user.blitz_rating,
             user.blitz_games,
-
             user.rapid_rating,
             user.rapid_games,
-
             user.classical_rating,
             user.classical_games
         ],

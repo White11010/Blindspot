@@ -1,4 +1,4 @@
-use serde::{Serialize};
+use serde::Serialize;
 
 use crate::db::users::model::User;
 
@@ -6,8 +6,5 @@ use crate::db::users::model::User;
 #[serde(tag = "state", content = "data")]
 pub enum BootstrapState {
     Unauthorized,
-    Authorized {
-        user: User,
-        is_stale: bool,
-    }
+    Authorized { user: User, is_stale: bool },
 }

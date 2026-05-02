@@ -1,6 +1,5 @@
 <template>
-  <v-card v-if="userStore.user">
-    <p>Wellcome, {{ userStore.user.username }}!</p>
+  <v-card v-if="userStore.user" class="h-100" :title="`Wellcome, ${userStore.user.username}!`">
   </v-card>
 </template>
 

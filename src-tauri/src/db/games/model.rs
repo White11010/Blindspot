@@ -1,10 +1,11 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GameRecord {
+pub struct Game {
     pub id: String,
 
     pub username: String,
+    pub platform: String,
 
     pub rated: bool,
     pub speed: String,
@@ -29,12 +30,14 @@ pub struct GameRecord {
     pub player_rating: Option<i64>,
     pub opponent_rating: Option<i64>,
 
-    pub winner: Option<String>,      // white / black / null(draw)
-    pub player_color: String,        // white / black
-    pub player_result: String,       // win / loss / draw
+    pub winner: Option<String>,
+    pub player_color: String,
+    pub player_result: String,
 
     pub opening_eco: Option<String>,
     pub opening_name: Option<String>,
 
+    pub moves: Option<String>,
+    pub last_fen: Option<String>,
     pub pgn: String,
 }

@@ -1,3 +1,5 @@
+// src-tauri/src/clients/lichess.rs
+
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
@@ -24,9 +26,9 @@ pub struct LichessProfile {
     pub perfs: Option<Perfs>,
 }
 
+/// GET /api/account
 pub async fn fetch_me(app: &AppHandle) -> Result<LichessProfile, String> {
-    let token = auth::load_token(app)?
-        .ok_or("Token not found")?;
+    let token = auth::load_token(app)?.ok_or("Token not found")?;
 
     let client = reqwest::Client::new();
 
@@ -46,4 +48,39 @@ pub async fn fetch_me(app: &AppHandle) -> Result<LichessProfile, String> {
         .json::<LichessProfile>()
         .await
         .map_err(|e| e.to_string())
+}
+
+/// GET /api/games/user/{username}
+pub async fn fetch_games(app: &AppHandle, username: &str) -> Result<String, String> {
+    let token = auth::load_token(app)?.ok_or("Token not found")?;
+
+    let url = format!(
+        concat!(
+            "https://lichess.org/api/games/user/{}",
+            "?max=100",
+            "&moves=true",
+            "&pgnInJson=true",
+            "&evals=true",
+            "&accuracy=true",
+            "&opening=true",
+            "&lastFen=true"
+        ),
+        username
+    );
+
+    let client = reqwest::Client::new();
+
+    let response = client
+        .get(url)
+        .header("Accept", "application/x-ndjson")
+        .bearer_auth(token)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !response.status().is_success() {
+        return Err(format!("Lichess Games API error: {}", response.status()));
+    }
+
+    response.text().await.map_err(|e| e.to_string())
 }

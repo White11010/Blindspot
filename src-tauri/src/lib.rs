@@ -1,8 +1,8 @@
-mod commands;
-mod services;
 mod clients;
+mod commands;
 mod db;
-
+mod parsers;
+mod services;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -16,11 +16,14 @@ pub fn run() {
             commands::auth::save_token,
             commands::auth::load_token,
             commands::auth::delete_token,
-
             commands::users::get_me,
             commands::users::sync_me,
-
-            commands::app::bootstrap
+            commands::app::bootstrap,
+            commands::games::sync_games,
+            commands::games::get_games,
+            commands::games::refresh_games_background,
+            commands::insights::get_insights,
+            commands::insights::regenerate_insights
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

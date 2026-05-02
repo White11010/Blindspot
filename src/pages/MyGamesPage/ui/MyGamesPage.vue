@@ -1,11 +1,11 @@
 <template>
   <div class="my-games-page">
-    <v-card v-if="!gamesStore.games.length" title="Expore your games">
-      <v-card-text>
-        <v-btn @click="loadPlayerData">Load your games</v-btn>
+    <v-card v-if="!gamesStore.games.length" title="Expore your games" class="h-100">
+      <v-card-text class="mt-2 d-flex justify-center">
+        <v-btn :loading="gamesStore.loading" @click="loadPlayerData">Load your games</v-btn>
       </v-card-text>
     </v-card>
-    <div v-if="gamesStore.games.length" class="my-games-page__table-wrapper">
+    <div v-if="!gamesStore.loading && gamesStore.games.length" class="my-games-page__table-wrapper">
       <my-games />
     </div>
   </div>
@@ -13,20 +13,20 @@
 
 <script setup lang="ts">
 import { useGamesStore } from '@/entities/game';
-import { useUserStore } from '@/entities/user';
 import { MyGames } from '@/widgets/MyGames';
 
 const gamesStore = useGamesStore();
-const userStore = useUserStore();
 
 async function loadPlayerData(): Promise<void> {
-  await userStore.getCurrentUser();
-  await gamesStore.sync(userStore.user!.username);
+  await gamesStore.sync();
 }
 </script>
 
 <style scoped lang="scss">
 .my-games-page {
-  width: 820px;
+  padding: 2rem;
+  max-width: 940px;
+  flex: 1;
+  height: 100%;
 }
 </style>

@@ -1,5 +1,5 @@
-use tauri::AppHandle;
 use crate::db::users::model::User;
+use tauri::AppHandle;
 
 #[tauri::command]
 pub async fn get_me(app: AppHandle) -> Result<Option<User>, String> {

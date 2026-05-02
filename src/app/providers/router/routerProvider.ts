@@ -1,15 +1,18 @@
-import { createMemoryHistory, createRouter } from 'vue-router'
+import { createMemoryHistory, createRouter } from 'vue-router';
 
-import {HomePage} from '@/pages/HomePage'
-import {MyGamesPage} from '@/pages/MyGamesPage'
-
+import { AnalizeBoardPage } from '@/pages/AnalizeBoardPage';
+import { HomePage } from '@/pages/HomePage';
+import { InsightsPage } from '@/pages/InsightsPage';
+import { MyGamesPage } from '@/pages/MyGamesPage';
 
 const routes = [
-    { path: '/', name: 'Home', component: HomePage },
-    { path: '/my-games', name: 'MyGames', component: MyGamesPage },
-]
+  { path: '/', name: 'Home', component: HomePage },
+  { path: '/my-games', name: 'MyGames', component: MyGamesPage },
+  { path: '/analize-board', name: 'AnalizeBoard', component: AnalizeBoardPage },
+  { path: '/insights', name: 'Insights', component: InsightsPage },
+];
 
 export const router = createRouter({
-    history: createMemoryHistory(),
-    routes,
-})
+  history: createMemoryHistory(),
+  routes,
+});

@@ -10,7 +10,8 @@ pub fn init(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let conn = Connection::open(path)?;
 
     crate::db::users::schema::init_users_table(&conn);
-    // crate::db::games::init::init_games_table(&conn);
+    crate::db::games::schema::init_games_table(&conn);
+    crate::db::insights::schema::init_insights_table(&conn);
 
     Ok(())
 }

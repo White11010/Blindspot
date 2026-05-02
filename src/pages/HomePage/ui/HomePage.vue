@@ -10,6 +10,9 @@ import { LichessAccountConnection } from '@/widgets/LichessAccountConnection';
 
 <style scoped>
 .home-page {
-  width: 820px;
+  padding: 2rem;
+  max-width: 940px;
+  flex: 1;
+  height: 100%;
 }
 </style>
