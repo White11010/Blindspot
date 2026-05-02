@@ -1,12 +1,15 @@
-<script setup lang="ts">
-import {ConnectLichessAccount} from "@/features/ConnectLichessAccount";
-</script>
-
 <template>
-<ConnectLichessAccount />
-  <router-link to="/my-games">Explore your games</router-link>
+  <div class="home-page">
+    <lichess-account-connection />
+  </div>
 </template>
 
-<style scoped>
+<script setup lang="ts">
+import { LichessAccountConnection } from '@/widgets/LichessAccountConnection';
+</script>
 
+<style scoped>
+.home-page {
+  width: 820px;
+}
 </style>

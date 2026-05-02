@@ -5,8 +5,8 @@ import {MyGamesPage} from '@/pages/MyGamesPage'
 
 
 const routes = [
-    { path: '/', component: HomePage },
-    { path: '/my-games', component: MyGamesPage },
+    { path: '/', name: 'Home', component: HomePage },
+    { path: '/my-games', name: 'MyGames', component: MyGamesPage },
 ]
 
 export const router = createRouter({

@@ -8,7 +8,21 @@
   </head>
 
   <body>
+    <div id="preloader">Loading...</div>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
+    <style>
+      #preloader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0f0f0f;
+        color: white;
+        font-size: 14px;
+        z-index: 9999;
+      }
+    </style>
   </body>
 </html>
