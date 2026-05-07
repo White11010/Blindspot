@@ -63,6 +63,8 @@ import { useBoardStore } from '@/entities/board';
 import { ChessStaticBoard } from '@/shared/ui';
 import { Chess } from 'chess.js';
 import { Key } from 'chessground/types';
+import { invoke } from '@tauri-apps/api/core';
+import { log } from 'node:console';
 
 const router = useRouter();
 const boardStore = useBoardStore();
@@ -71,12 +73,15 @@ const { games } = useSyncGamesQuery();
 
 const lastGame = computed(() => games.value[2]);
 
-function onAnalizeButtonClick(game: Game): void {
-  if (!game.pgn) return;
+async function onAnalizeButtonClick(game: Game) {
+  const res = await invoke('get_game_analysis', {gameId: game.id})
+  console.log(res);
+  
+  // if (!game.pgn) return;
 
-  boardStore.loadPgn(game.pgn);
+  // boardStore.loadPgn(game.pgn);
 
-  router.push('/analize-board');
+  // router.push('/analize-board');
 }
 
 function getLastMoveFromMoves(moves: string): [Key, Key] {

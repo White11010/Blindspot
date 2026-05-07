@@ -26,20 +26,20 @@
       ></v-list-item>
       <v-list-item
         class="mt-2"
-        :active="route?.name === 'MyGames'"
+        :active="route?.name === 'MyGames' || route?.name === 'GameDetails'"
         link
         title="My games"
         prepend-icon="mdi-table-large"
         @click="router?.push('/my-games')"
       ></v-list-item>
-      <v-list-item
+      <!-- <v-list-item
         class="mt-2"
         :active="route?.name === 'AnalizeBoard'"
         link
         title="Analize Board"
         prepend-icon="mdi-microscope"
         @click="router?.push('/analize-board')"
-      ></v-list-item>
+      ></v-list-item> -->
 
       <template #append>
         <v-list-item

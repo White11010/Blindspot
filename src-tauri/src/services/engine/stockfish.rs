@@ -164,3 +164,13 @@ fn get_engine_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
 pub fn get_engine() -> Arc<Mutex<Option<StockfishEngine>>> {
     ENGINE.clone()
 }
+
+/// Starts Stockfish if the global slot is empty (used by every command path that needs the engine).
+pub fn ensure_engine_started(app: &AppHandle) -> Result<(), String> {
+    let global = get_engine();
+    let mut guard = global.lock().map_err(|_| "Failed to lock engine mutex")?;
+    if guard.is_none() {
+        *guard = Some(StockfishEngine::new(app)?);
+    }
+    Ok(())
+}

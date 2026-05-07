@@ -1,0 +1,1 @@
+export {default as GameDetailsPage} from './ui/GameDetailsPage.vue'

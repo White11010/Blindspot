@@ -1,6 +1,7 @@
 pub mod app;
 pub mod auth;
 pub mod engine;
+pub mod game_analysis;
 pub mod games;
 pub mod insights;
 pub mod users;

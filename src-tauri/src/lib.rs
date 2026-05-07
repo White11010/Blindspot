@@ -26,6 +26,11 @@ pub fn run() {
             commands::insights::regenerate_insights,
             commands::engine::init_engine,
             commands::engine::analyze_position,
+            commands::game_analysis::analyze_game,
+            commands::game_analysis::get_game_analysis,
+            commands::game_analysis::analyze_pending_games,
+            commands::game_analysis::cancel_pending_analysis,
+            commands::game_analysis::get_similar_games,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
