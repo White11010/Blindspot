@@ -1,6 +1,6 @@
 <template>
   <v-card>
-    <v-card-title>Evaluation history</v-card-title>
+    <v-card-title>{{ t('analysis.evalHistoryTitle') }}</v-card-title>
     <v-card-text>
       <apexchart
         v-if="series[0].data.length"
@@ -9,7 +9,7 @@
         :options="chartOptions"
         :series="series"
       />
-      <v-alert v-else type="info" variant="tonal">No evaluation history available yet.</v-alert>
+      <v-alert v-else type="info" variant="tonal">{{ t('analysis.evalHistoryEmpty') }}</v-alert>
     </v-card-text>
   </v-card>
 </template>
@@ -19,11 +19,13 @@ import { computed } from 'vue';
 import { useTheme } from 'vuetify';
 
 import type { GameAnalysis } from '@/entities/game-analysis';
+import { useI18n } from '@/shared/lib/i18n';
 
 const props = defineProps<{
   analysis: GameAnalysis;
 }>();
 
+const { t } = useI18n();
 const theme = useTheme();
 
 const isDark = computed(() => theme.global.current.value.dark);
@@ -33,7 +35,7 @@ const lineColor = computed(() => theme.current.value.colors.primary);
 
 const series = computed(() => [
   {
-    name: 'Eval',
+    name: t('analysis.evalSeriesName'),
     data: props.analysis.eval_history.map((value, index) => ({
       x: index + 1,
       y: value / 100,
@@ -52,13 +54,13 @@ const chartOptions = computed(() => ({
     mode: isDark.value ? 'dark' : 'light',
   },
   xaxis: {
-    title: { text: 'Ply' },
+    title: { text: t('analysis.evalAxisPly') },
     labels: { style: { colors: textColor.value } },
     axisBorder: { color: borderColor.value },
     axisTicks: { color: borderColor.value },
   },
   yaxis: {
-    title: { text: 'Pawns' },
+    title: { text: t('analysis.evalAxisPawns') },
     labels: { style: { colors: textColor.value } },
   },
   grid: {

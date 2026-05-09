@@ -1,0 +1,126 @@
+import { defineStore } from 'pinia';
+
+import type { MyGamesPeriod } from './games.types';
+
+const STORAGE_KEY = 'chessanalytics:myGamesFilters';
+
+/** Vuetify `v-data-table` sort model (single column). */
+export type MyGamesTableSortItem = {
+  key: string;
+  order?: 'asc' | 'desc';
+};
+
+const DEFAULT_SORT_BY: MyGamesTableSortItem[] = [{ key: 'created_at', order: 'desc' }];
+
+const SORTABLE_KEYS = new Set([
+  'created_at',
+  'analysis_accuracy',
+  'analysis_acpl',
+  'player_rating',
+  'opponent_name',
+  'opening_name',
+  'speed',
+]);
+
+function normalizeSortBy(raw: unknown): MyGamesTableSortItem[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return [...DEFAULT_SORT_BY];
+  }
+  const first = raw[0] as { key?: string; order?: string };
+  const key = typeof first?.key === 'string' ? first.key : '';
+  const order = first?.order === 'asc' || first?.order === 'desc' ? first.order : 'desc';
+  if (!SORTABLE_KEYS.has(key)) {
+    return [...DEFAULT_SORT_BY];
+  }
+  return [{ key, order }];
+}
+
+/** Legacy toolbar preset → table `sortBy` (rating → `player_rating` to match column). */
+function sortPresetToSortBy(preset: string): MyGamesTableSortItem[] {
+  const map: Record<string, MyGamesTableSortItem> = {
+    date_desc: { key: 'created_at', order: 'desc' },
+    date_asc: { key: 'created_at', order: 'asc' },
+    accuracy_desc: { key: 'analysis_accuracy', order: 'desc' },
+    accuracy_asc: { key: 'analysis_accuracy', order: 'asc' },
+    acpl_asc: { key: 'analysis_acpl', order: 'asc' },
+    acpl_desc: { key: 'analysis_acpl', order: 'desc' },
+    rating_desc: { key: 'player_rating', order: 'desc' },
+    rating_asc: { key: 'player_rating', order: 'asc' },
+  };
+  return [map[preset] ?? { ...DEFAULT_SORT_BY[0] }];
+}
+
+export interface MyGamesFiltersSnapshot {
+  searchText: string;
+  results: Array<'win' | 'loss' | 'draw'>;
+  speeds: string[];
+  periods: MyGamesPeriod[];
+  patternTag: string | null;
+  openingValue: string | null;
+  sortBy: MyGamesTableSortItem[];
+}
+
+function defaultSnapshot(): MyGamesFiltersSnapshot {
+  return {
+    searchText: '',
+    results: [],
+    speeds: [],
+    periods: [],
+    patternTag: null,
+    openingValue: null,
+    sortBy: [...DEFAULT_SORT_BY],
+  };
+}
+
+function loadSnapshot(): MyGamesFiltersSnapshot {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return defaultSnapshot();
+    }
+    const parsed = JSON.parse(raw) as Record<string, unknown> & {
+      sortPreset?: string;
+      sortBy?: unknown;
+    };
+    const base = defaultSnapshot();
+    const { sortPreset, sortBy: rawSortBy, ...rest } = parsed;
+
+    let sortBy = base.sortBy;
+    if (Array.isArray(rawSortBy) && rawSortBy.length && (rawSortBy[0] as { key?: string })?.key) {
+      sortBy = normalizeSortBy(rawSortBy);
+    } else if (typeof sortPreset === 'string' && sortPreset) {
+      sortBy = sortPresetToSortBy(sortPreset);
+    }
+
+    return { ...base, ...rest, sortBy } as MyGamesFiltersSnapshot;
+  } catch {
+    return defaultSnapshot();
+  }
+}
+
+function saveSnapshot(s: MyGamesFiltersSnapshot) {
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+}
+
+export const useMyGamesFiltersStore = defineStore('myGamesFilters', {
+  state: (): MyGamesFiltersSnapshot => loadSnapshot(),
+
+  actions: {
+    persist() {
+      saveSnapshot({
+        searchText: this.searchText,
+        results: this.results,
+        speeds: this.speeds,
+        periods: this.periods,
+        patternTag: this.patternTag,
+        openingValue: this.openingValue,
+        sortBy: [...this.sortBy],
+      });
+    },
+
+    reset() {
+      Object.assign(this, defaultSnapshot());
+      this.persist();
+    },
+  },
+});

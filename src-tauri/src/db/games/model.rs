@@ -41,3 +41,13 @@ pub struct Game {
     pub last_fen: Option<String>,
     pub pgn: String,
 }
+
+/// Game row plus analysis summary for list views (e.g. My Games filters).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GameListItem {
+    #[serde(flatten)]
+    pub base: Game,
+    pub analysis_accuracy: Option<f64>,
+    pub analysis_acpl: Option<f64>,
+    pub pattern_tags: Vec<String>,
+}

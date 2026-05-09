@@ -7,6 +7,7 @@ mod services;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_keyring::init())
         .setup(|app| {
             db::connection::init(app.handle())?;
@@ -23,6 +24,7 @@ pub fn run() {
             commands::games::get_games,
             commands::games::refresh_games_background,
             commands::insights::get_insights,
+            commands::insights::get_daily_insight,
             commands::insights::regenerate_insights,
             commands::engine::init_engine,
             commands::engine::analyze_position,

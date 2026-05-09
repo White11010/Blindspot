@@ -13,6 +13,11 @@ pub fn regenerate_insights(app: AppHandle) -> Result<Vec<Insight>, String> {
     service::regenerate_for_active_user(app)
 }
 
+#[tauri::command]
+pub fn get_daily_insight(app: AppHandle) -> Result<Option<Insight>, String> {
+    service::get_daily_insight_for_active_user(app)
+}
+
 // #[tauri::command]
 // pub fn refresh_insights_background(app: AppHandle) -> Result<(), String> {
 //     tauri::async_runtime::spawn(async move {

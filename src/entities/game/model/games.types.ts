@@ -38,4 +38,11 @@ export interface Game {
   last_fen: string | null;
 
   pgn: string;
+
+  /** Present when loaded via `get_games` with completed analysis */
+  analysis_accuracy?: number | null;
+  analysis_acpl?: number | null;
+  pattern_tags?: string[];
 }
+
+export type MyGamesPeriod = '7' | '30' | '90' | 'all';

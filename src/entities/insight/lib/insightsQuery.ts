@@ -30,3 +30,29 @@ export function useRegenerateInsightsQuery(enabled: MaybeRef<boolean>): UseQuery
     insights: items,
   };
 }
+
+/** Fetches cached insights from SQLite (no regeneration). */
+export function useInsightsLoadQuery(enabled: MaybeRef<boolean>): UseQueryReturnType<
+  Insight[],
+  Error
+> & {
+  insights: Ref<Insight[]>;
+} {
+  const store = useInsightsStore();
+  const { items } = storeToRefs(store);
+
+  const query = useQuery<Insight[]>({
+    queryKey: ['insights', 'load'],
+    queryFn: async () => {
+      await store.load();
+      return [...store.items];
+    },
+    staleTime: 1000 * 60,
+    enabled: computed(() => toValue(enabled)),
+  });
+
+  return {
+    ...query,
+    insights: items,
+  };
+}

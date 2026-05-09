@@ -25,11 +25,24 @@ pub struct KeyInsight {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemConnection {
+    /// Legacy; leave empty for new analyses — UI uses `primary_variant` + i18n.
+    #[serde(default)]
     pub text: String,
     pub tag: String,
     pub count: i64,
     pub window: i32,
+    #[serde(default)]
     pub secondary_text: Option<String>,
+    /// `no_tags` | `similar_low` | `similar_high`
+    #[serde(default)]
+    pub primary_variant: String,
+    /// `none` | `revisit` | `win_rate`
+    #[serde(default)]
+    pub secondary_variant: String,
+    #[serde(default)]
+    pub secondary_total: i64,
+    #[serde(default)]
+    pub secondary_wr_pct: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,3 +1,5 @@
+export type InsightCategory = 'openings' | 'time' | 'tactics' | 'psychology';
+
 export interface Insight {
   id: string;
 
@@ -18,6 +20,13 @@ export interface Insight {
   recommendation?: string | null;
 
   payload_json?: string | null;
+
+  category: InsightCategory;
+
+  metric_number?: number | null;
+  metric_prev?: number | null;
+
+  sort_priority: number;
 
   created_at: number;
   expires_at?: number | null;

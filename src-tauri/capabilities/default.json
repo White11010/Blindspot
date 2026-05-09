@@ -12,6 +12,7 @@
     "keyring:allow-set-secret",
     "keyring:allow-get-secret",
     "keyring:allow-delete-secret",
-    "store:default"
+    "store:default",
+    "opener:default"
   ]
 }

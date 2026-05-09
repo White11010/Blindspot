@@ -1,11 +1,9 @@
 <template>
-  <v-card title="Month rate">
-    <v-btn-toggle class="my-2" base-color="secondary" variant="text" v-model="speed" mandatory>
-      <v-btn value="bullet"> Bullet </v-btn>
-
-      <v-btn value="blitz"> Blitz </v-btn>
-
-      <v-btn value="rapid"> Rapid </v-btn>
+  <v-card :title="t('home.rateChartTitle')">
+    <v-btn-toggle v-model="speed" class="my-2" base-color="secondary" variant="text" mandatory>
+      <v-btn value="bullet">{{ t('myGames.speed.bullet') }}</v-btn>
+      <v-btn value="blitz">{{ t('myGames.speed.blitz') }}</v-btn>
+      <v-btn value="rapid">{{ t('myGames.speed.rapid') }}</v-btn>
     </v-btn-toggle>
     <apexchart
       v-if="chartData.length"
@@ -25,7 +23,9 @@ import { computed, ref } from 'vue';
 import { useTheme } from 'vuetify';
 
 import { useSyncGamesQuery } from '@/entities/game';
+import { useI18n } from '@/shared/lib/i18n';
 
+const { t } = useI18n();
 const theme = useTheme();
 const { games } = useSyncGamesQuery();
 
@@ -34,7 +34,6 @@ const speed = ref('bullet');
 
 const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
 
-// ---------------- FILTERED GAMES ----------------
 const filteredGames = computed(() => {
   const now = Date.now();
   const from = now - THIRTY_DAYS;
@@ -51,7 +50,6 @@ const filteredGames = computed(() => {
     .sort((a, b) => a.created_at - b.created_at);
 });
 
-// ---------------- AGGREGATE BY DAY ----------------
 const chartData = computed(() => {
   const dayMap = new Map<number, number>();
 
@@ -60,7 +58,6 @@ const chartData = computed(() => {
 
     const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
-    // последний рейтинг дня
     dayMap.set(dayStart, game.player_rating!);
   });
 
@@ -70,23 +67,20 @@ const chartData = computed(() => {
   }));
 });
 
-// ---------------- THEME ----------------
 const isDark = computed(() => theme.global.current.value.dark);
 
 const textColor = computed(() => theme.current.value.colors['on-surface']);
 const borderColor = computed(() => theme.current.value.colors.outline);
 const lineColor = computed(() => theme.current.value.colors.secondary);
 
-// ---------------- SERIES ----------------
 const series = computed(() => [
   {
-    name: 'Rating',
+    name: t('home.rateSeriesName'),
     data: chartData.value,
     color: lineColor.value,
   },
 ]);
 
-// ---------------- OPTIONS ----------------
 const chartOptions = computed(() => ({
   chart: {
     type: 'line',

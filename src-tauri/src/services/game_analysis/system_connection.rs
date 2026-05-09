@@ -14,11 +14,15 @@ pub fn build_system_connection(
     let window: i32 = 10;
     if tags.is_empty() {
         return Ok(SystemConnection {
-            text: "Play more rated games to unlock deeper pattern stats.".into(),
+            text: String::new(),
             tag: "general".into(),
             count: 0,
             window,
             secondary_text: None,
+            primary_variant: "no_tags".into(),
+            secondary_variant: "none".into(),
+            secondary_total: 0,
+            secondary_wr_pct: 0.0,
         });
     }
 
@@ -27,49 +31,43 @@ pub fn build_system_connection(
     let count = ga_repo::count_similar_in_recent(conn, username, user_id, &tag, window as u32)
         .map_err(|e| e.to_string())?;
 
-    let text = if count <= 1 {
-        format!(
-            "This pattern ({}) appears in your recent games — keep an eye on it.",
-            tag.replace('_', " ")
-        )
+    let primary_variant = if count <= 1 {
+        "similar_low"
     } else {
-        format!(
-            "This is your {} similar case in last {} games.",
-            ordinal(count),
-            window
-        )
+        "similar_high"
     };
 
-    let secondary = winrate_note(conn, username, user_id, &tag).ok();
+    let (secondary_variant, secondary_total, secondary_wr_pct) =
+        match winrate_note_data(conn, username, user_id, &tag) {
+            Ok(WinrateNote::LowSample { total }) => ("revisit", total, 0.0),
+            Ok(WinrateNote::WinRate { total, wr_pct }) => ("win_rate", total, wr_pct),
+            Err(_) => ("none", 0, 0.0),
+        };
 
     Ok(SystemConnection {
-        text,
+        text: String::new(),
         tag,
         count,
         window,
-        secondary_text: secondary,
+        secondary_text: None,
+        primary_variant: primary_variant.into(),
+        secondary_variant: secondary_variant.into(),
+        secondary_total,
+        secondary_wr_pct,
     })
 }
 
-fn ordinal(n: i64) -> String {
-    let s = match n % 100 {
-        11..=13 => format!("{}th", n),
-        _ => match n % 10 {
-            1 => format!("{}st", n),
-            2 => format!("{}nd", n),
-            3 => format!("{}rd", n),
-            _ => format!("{}th", n),
-        },
-    };
-    s
+enum WinrateNote {
+    LowSample { total: i64 },
+    WinRate { total: i64, wr_pct: f64 },
 }
 
-fn winrate_note(
+fn winrate_note_data(
     conn: &Connection,
     username: &str,
     user_id: &str,
     tag: &str,
-) -> Result<String, rusqlite::Error> {
+) -> Result<WinrateNote, rusqlite::Error> {
     let mut stmt = conn.prepare(
         "
         SELECT g.player_result, COUNT(*) as c
@@ -98,15 +96,12 @@ fn winrate_note(
 
     let total = wins + losses + draws;
     if total < 5 {
-        return Ok(format!(
-            "You often revisit positions tagged \"{}\" — review a few model games.",
-            tag.replace('_', " ")
-        ));
+        return Ok(WinrateNote::LowSample { total });
     }
 
     let wr = (wins as f64 + draws as f64 * 0.5) / total as f64 * 100.0;
-    Ok(format!(
-        "In {} games with this profile you score {:.0}% (wins/draws).",
-        total, wr
-    ))
+    Ok(WinrateNote::WinRate {
+        total,
+        wr_pct: wr,
+    })
 }

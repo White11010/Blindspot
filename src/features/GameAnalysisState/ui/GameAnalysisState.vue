@@ -20,7 +20,10 @@
 </template>
 
 <script setup lang="ts">
+import { useI18n } from '@/shared/lib/i18n';
 import { computed } from 'vue';
+
+const { t } = useI18n();
 
 type AnalysisUiState = 'loading' | 'empty' | 'pending' | 'failed' | 'error';
 
@@ -37,13 +40,13 @@ const props = withDefaults(
 const title = computed(() => {
   switch (props.state) {
     case 'empty':
-      return 'No analysis found for this game';
+      return t('analysis.stateEmptyTitle');
     case 'pending':
-      return 'Analysis is in progress';
+      return t('analysis.statePendingTitle');
     case 'failed':
-      return 'Analysis failed';
+      return t('analysis.stateFailedTitle');
     case 'error':
-      return 'Could not load game analysis';
+      return t('analysis.stateErrorTitle');
     default:
       return '';
   }
@@ -56,13 +59,13 @@ const description = computed(() => {
 
   switch (props.state) {
     case 'empty':
-      return 'Run analysis to unlock key moments, evaluation chart, and personal patterns.';
+      return t('analysis.stateEmptyDesc');
     case 'pending':
-      return 'You can refresh or run analysis again.';
+      return t('analysis.statePendingDesc');
     case 'failed':
-      return 'Try running analysis again.';
+      return t('analysis.stateFailedDesc');
     case 'error':
-      return 'Please retry in a moment.';
+      return t('analysis.stateErrorDesc');
     default:
       return '';
   }

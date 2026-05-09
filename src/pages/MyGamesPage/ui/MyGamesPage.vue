@@ -1,6 +1,8 @@
 <template>
   <div class="my-games-page">
-    <my-games />
+    <div class="my-games-page__container">
+      <my-games />
+    </div>
   </div>
 </template>
 
@@ -10,9 +12,15 @@ import { MyGames } from '@/widgets/MyGames';
 
 <style scoped lang="scss">
 .my-games-page {
-  padding: 2rem;
-  max-width: 58rem;
+  width: 100%;
   flex: 1;
   height: 100%;
+  overflow-y: auto;
+
+  &__container {
+    padding: 2rem;
+    max-width: 110rem;
+    margin: 0 auto;
+  }
 }
 </style>

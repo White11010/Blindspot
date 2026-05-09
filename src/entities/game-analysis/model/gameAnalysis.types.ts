@@ -27,6 +27,12 @@ export interface SystemConnection {
   count: number;
   window: number;
   secondary_text: string | null;
+  /** `no_tags` | `similar_low` | `similar_high` */
+  primary_variant?: string;
+  /** `none` | `revisit` | `win_rate` */
+  secondary_variant?: string;
+  secondary_total?: number;
+  secondary_wr_pct?: number;
 }
 
 export interface SimilarGames {

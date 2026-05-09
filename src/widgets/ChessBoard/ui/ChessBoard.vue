@@ -146,8 +146,8 @@ async function runEngine(fen: string) {
 function drawBestMove(move: string) {
   if (!move || move.length < 4) return;
 
-  const orig = move.slice(0, 2);
-  const dest = move.slice(2, 4);
+  const orig = move.slice(0, 2) as Key;
+  const dest = move.slice(2, 4) as Key;
 
   if (!isValidSquare(orig) || !isValidSquare(dest)) return;
 
@@ -158,7 +158,6 @@ function drawBestMove(move: string) {
       orig,
       dest,
       brush: 'blue',
-      below: true,
     },
   ]);
 }

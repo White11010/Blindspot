@@ -5,43 +5,50 @@
     prepend-icon="mdi-robot"
     :loading="isRunning"
     :disabled="isRunning || !gameId"
+    :aria-busy="isRunning"
     @click="runAnalysis"
   >
-    {{ isRunning ? 'Analyzing...' : label }}
+    {{ isRunning ? t('gameDetails.analyzingShort') : labelShown }}
   </v-btn>
 </template>
 
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/core';
-import { ref } from 'vue';
+import { storeToRefs } from 'pinia';
+import { computed } from 'vue';
 
 import type { GameAnalysis } from '@/entities/game-analysis';
+import { useGameAnalysisRunStore } from '@/entities/game-analysis';
+import { useI18n } from '@/shared/lib/i18n';
 
-const props = withDefaults(
-  defineProps<{
-    gameId: string;
-    label?: string;
-    depth?: number;
-  }>(),
-  {
-    label: 'Run analysis',
-    depth: undefined,
-  },
-);
+const props = defineProps<{
+  gameId: string;
+  label?: string;
+  depth?: number;
+}>();
+
+const { t } = useI18n();
+
+const labelShown = computed(() => props.label ?? t('gameDetails.runAnalysis'));
 
 const emit = defineEmits<{
   done: [analysis: GameAnalysis];
   failed: [message: string];
 }>();
 
-const isRunning = ref(false);
+const runStore = useGameAnalysisRunStore();
+const { runningGameId } = storeToRefs(runStore);
+
+const isRunning = computed(
+  () => Boolean(props.gameId) && runningGameId.value === props.gameId,
+);
 
 async function runAnalysis() {
   if (!props.gameId || isRunning.value) {
     return;
   }
 
-  isRunning.value = true;
+  runStore.setRunningGameId(props.gameId);
   try {
     const analysis = await invoke<GameAnalysis>('analyze_game', {
       gameId: props.gameId,
@@ -52,7 +59,9 @@ async function runAnalysis() {
     const message = error instanceof Error ? error.message : 'Failed to run analysis';
     emit('failed', message);
   } finally {
-    isRunning.value = false;
+    if (runStore.runningGameId === props.gameId) {
+      runStore.setRunningGameId(null);
+    }
   }
 }
 </script>

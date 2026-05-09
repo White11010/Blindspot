@@ -2,7 +2,7 @@ use tauri::AppHandle;
 
 use crate::clients::lichess;
 use crate::db::connection::get_conn;
-use crate::db::games::model::Game;
+use crate::db::games::model::{Game, GameListItem};
 use crate::db::games::repository;
 use crate::db::users::repository as users_repository;
 use crate::parsers::lichess_games;
@@ -46,15 +46,16 @@ pub async fn sync_games(
 pub fn get_my_games(
     app: AppHandle,
     limit: u32,
-) -> Result<Vec<Game>, String> {
+) -> Result<Vec<GameListItem>, String> {
     let conn = get_conn(&app)?;
 
     let user = users_repository::get_active_user(&conn)?
         .ok_or("Active user not found")?;
 
-    repository::get_games_by_username(
+    repository::get_game_list_items(
         &conn,
         &user.username,
+        &user.id,
         limit,
     )
     .map_err(|e| e.to_string())

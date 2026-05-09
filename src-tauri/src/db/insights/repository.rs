@@ -33,6 +33,12 @@ pub fn replace_user_insights(
 
                 payload_json,
 
+                category,
+                metric_number,
+                metric_prev,
+
+                sort_priority,
+
                 created_at,
                 expires_at
             )
@@ -44,7 +50,9 @@ pub fn replace_user_insights(
                 ?8, ?9,
                 ?10,
                 ?11,
-                ?12, ?13
+                ?12, ?13, ?14,
+                ?15,
+                ?16, ?17
             )
             ",
         )?;
@@ -62,6 +70,10 @@ pub fn replace_user_insights(
                 item.metric_value,
                 item.recommendation,
                 item.payload_json,
+                item.category,
+                item.metric_number,
+                item.metric_prev,
+                item.sort_priority,
                 item.created_at,
                 item.expires_at,
             ])?;
@@ -93,11 +105,17 @@ pub fn get_user_insights(conn: &Connection, user_id: &str) -> rusqlite::Result<V
 
             payload_json,
 
+            category,
+            metric_number,
+            metric_prev,
+
+            sort_priority,
+
             created_at,
             expires_at
         FROM insights
         WHERE user_id = ?1
-        ORDER BY created_at DESC
+        ORDER BY sort_priority DESC, confidence DESC, created_at DESC
         ",
     )?;
 
@@ -121,8 +139,14 @@ pub fn get_user_insights(conn: &Connection, user_id: &str) -> rusqlite::Result<V
 
             payload_json: row.get(10)?,
 
-            created_at: row.get(11)?,
-            expires_at: row.get(12)?,
+            category: row.get(11)?,
+            metric_number: row.get(12)?,
+            metric_prev: row.get(13)?,
+
+            sort_priority: row.get(14)?,
+
+            created_at: row.get(15)?,
+            expires_at: row.get(16)?,
         })
     })?;
 

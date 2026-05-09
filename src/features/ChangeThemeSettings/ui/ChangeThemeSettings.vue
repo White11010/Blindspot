@@ -1,9 +1,9 @@
 <template>
   <v-container fluid>
-    <p class="text-title-medium">Theme</p>
+    <p class="text-title-medium">{{ t('settings.themeSection') }}</p>
     <v-radio-group v-model="themeMode" inline hide-details>
-      <v-radio label="Light" value="light" />
-      <v-radio class="ml-2" label="Dark" value="dark" />
+      <v-radio :label="t('settings.themeLight')" value="light" />
+      <v-radio class="ml-2" :label="t('settings.themeDark')" value="dark" />
     </v-radio-group>
   </v-container>
 </template>
@@ -12,8 +12,11 @@
 import { ref, watch } from 'vue';
 import { useTheme } from 'vuetify';
 
+import { useI18n } from '@/shared/lib/i18n';
+
 const THEME_KEY = 'app-theme';
 
+const { t } = useI18n();
 const theme = useTheme();
 
 const themeMode = ref<'light' | 'dark'>(theme.global.name.value as 'light' | 'dark');

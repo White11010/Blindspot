@@ -1,8 +1,8 @@
 <template>
   <v-card
     v-if="appStore.status === 'ready' && userStore.user === null"
-    title="Connect your chess account"
-    subtitle="Import your games from Lichess to start querying"
+    :title="t('home.connectTitle')"
+    :subtitle="t('home.connectSubtitle')"
   >
     <v-card-text>
       <form class="d-flex ga-4 mt-4" @submit.prevent="onSubmit">
@@ -11,13 +11,14 @@
           density="comfortable"
           variant="outlined"
           hide-details
+          :label="t('home.connectTokenLabel')"
           :loading="isLoading"
-        ></v-text-field>
-        <v-btn type="submit" class="button--medium" size="large">Connect with Lichess</v-btn>
+        />
+        <v-btn type="submit" class="button--medium" size="large">{{ t('home.connectButton') }}</v-btn>
       </form>
     </v-card-text>
   </v-card>
-  <p v-if="appStore.status === 'loading'">Loading</p>
+  <p v-if="appStore.status === 'loading'">{{ t('home.loading') }}</p>
 </template>
 
 <script setup lang="ts">
@@ -27,6 +28,9 @@ import { ref } from 'vue';
 import { useAppStore } from '@/entities/app';
 import type { User } from '@/entities/user';
 import { useUserStore } from '@/entities/user';
+import { useI18n } from '@/shared/lib/i18n';
+
+const { t } = useI18n();
 
 const isLoading = ref(false);
 const userStore = useUserStore();
@@ -36,7 +40,6 @@ const tokenInput = ref<null | string>(null);
 async function saveToken(): Promise<void> {
   isLoading.value = true;
   try {
-    // Вызываем Rust-команду и передаем ей имя пользователя
     await invoke('save_token', { token: tokenInput.value });
     const user = await invoke('sync_me');
     userStore.setUser(user as User);

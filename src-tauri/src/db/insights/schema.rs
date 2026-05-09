@@ -24,6 +24,13 @@ pub fn init_insights_table(conn: &Connection) {
 
             payload_json TEXT,
 
+            category TEXT NOT NULL,
+
+            metric_number REAL,
+            metric_prev REAL,
+
+            sort_priority INTEGER NOT NULL DEFAULT 0,
+
             created_at INTEGER NOT NULL,
             expires_at INTEGER
         );
@@ -33,6 +40,12 @@ pub fn init_insights_table(conn: &Connection) {
 
         CREATE INDEX IF NOT EXISTS idx_insights_kind
         ON insights(kind);
+
+        CREATE INDEX IF NOT EXISTS idx_insights_category
+        ON insights(category);
+
+        CREATE INDEX IF NOT EXISTS idx_insights_sort_priority
+        ON insights(sort_priority DESC);
 
         CREATE INDEX IF NOT EXISTS idx_insights_created_at
         ON insights(created_at DESC);

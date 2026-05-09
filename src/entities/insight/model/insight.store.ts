@@ -12,6 +12,10 @@ interface State {
   error: string | null;
 
   lastLoadedAt: number | null;
+
+  /** Calendar day `YYYY-MM-DD` (local) for which `dailyInsight` was resolved. */
+  dailyPickedForDate: string | null;
+  dailyInsight: Insight | null;
 }
 
 export const useInsightsStore = defineStore('insights', {
@@ -24,15 +28,14 @@ export const useInsightsStore = defineStore('insights', {
     error: null,
 
     lastLoadedAt: null,
+
+    dailyPickedForDate: null,
+    dailyInsight: null,
   }),
 
   getters: {
     heroInsight(state): Insight | null {
-      if (!state.items.length) {
-        return null;
-      }
-
-      return state.items[0];
+      return state.dailyInsight;
     },
 
     goodInsights(state): Insight[] {
@@ -47,6 +50,31 @@ export const useInsightsStore = defineStore('insights', {
   },
 
   actions: {
+    localCalendarDay(): string {
+      return new Date().toLocaleDateString('en-CA');
+    },
+
+    async loadDailyInsight(): Promise<void> {
+      const today = this.localCalendarDay();
+      if (this.dailyPickedForDate === today && this.dailyInsight !== null) {
+        return;
+      }
+      if (this.items.length === 0) {
+        this.dailyInsight = null;
+        this.dailyPickedForDate = today;
+        return;
+      }
+
+      try {
+        const data = await invoke<Insight | null>('get_daily_insight');
+        this.dailyInsight = data;
+        this.dailyPickedForDate = today;
+      } catch {
+        this.dailyInsight = null;
+        this.dailyPickedForDate = today;
+      }
+    },
+
     async load() {
       this.isLoading = true;
       this.error = null;
@@ -56,6 +84,7 @@ export const useInsightsStore = defineStore('insights', {
 
         this.items = data;
         this.lastLoadedAt = Date.now();
+        await this.loadDailyInsight();
       } catch (error) {
         this.error = String(error);
       } finally {
@@ -72,6 +101,9 @@ export const useInsightsStore = defineStore('insights', {
 
         this.items = data;
         this.lastLoadedAt = Date.now();
+        this.dailyInsight = null;
+        this.dailyPickedForDate = null;
+        await this.loadDailyInsight();
       } catch (error) {
         this.error = String(error);
       } finally {
@@ -93,6 +125,8 @@ export const useInsightsStore = defineStore('insights', {
       this.items = [];
       this.error = null;
       this.lastLoadedAt = null;
+      this.dailyInsight = null;
+      this.dailyPickedForDate = null;
     },
   },
 });

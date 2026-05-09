@@ -1,60 +1,54 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use serde_json::json;
 
 use crate::db::games::model::Game;
 use crate::db::insights::model::Insight;
+use crate::services::insights::insight_common::{build_insight, CAT_TACTICS};
 
 pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
-    let mut late_game_blunders = 0;
-    let mut total_games = 0;
+    let mut late_game_losses = 0i64;
+    let mut total_games = 0i64;
 
-    println!("{}", games.len());
     for game in games {
         total_games += 1;
 
-        if is_late_game_throw(game) {
-            late_game_blunders += 1;
+        if is_late_game_loss(game) {
+            late_game_losses += 1;
         }
     }
 
-    if total_games < 15 || late_game_blunders == 0 {
+    if total_games < 15 || late_game_losses == 0 {
         return vec![];
     }
 
-    let rate = (late_game_blunders as f64 / total_games as f64) * 100.0;
+    let rate = (late_game_losses as f64 / total_games as f64) * 100.0;
+    let rate_r = rate.round();
 
-    vec![Insight {
-        id: format!("late-blunders-{}", user_id),
-
-        user_id: user_id.to_string(),
-
-        kind: "blunder_moments".to_string(),
-
-        title: "Ошибки в поздней стадии партии".to_string(),
-
-        summary: format!(
-            "В {} из {} партий ты терял позиции после 20 хода.",
-            late_game_blunders, total_games
+    vec![build_insight(
+        format!("tactics_late_{user_id}"),
+        user_id,
+        "tactics_late_game_losses",
+        CAT_TACTICS,
+        "Поздние партии с поражением".to_string(),
+        format!(
+            "В {late_game_losses} из {total_games} партий поражение после ≥40 полуходов."
         ),
-
-        severity: "warning".to_string(),
-
-        confidence: confidence(total_games),
-
-        metric_label: Some("Frequency".to_string()),
-
-        metric_value: Some(format!("{:.0}%", rate)),
-
-        recommendation: Some("Тренируй эндшпили и conversion выигранных позиций.".to_string()),
-
-        payload_json: None,
-
-        created_at: now(),
-
-        expires_at: None,
-    }]
+        "warning",
+        confidence(total_games),
+        Some("Доля партий".to_string()),
+        Some(format!("{rate_r}%")),
+        Some(rate_r),
+        Some("Тренируй эндшпили и конвертацию.".to_string()),
+        "tactics:late_long_loss",
+        52,
+        json!({
+            "late_losses": late_game_losses,
+            "total_games": total_games,
+            "rate": rate_r
+        }),
+    )]
 }
 
-fn is_late_game_throw(game: &Game) -> bool {
+fn is_late_game_loss(game: &Game) -> bool {
     let moves_count = game
         .moves
         .as_deref()
@@ -75,11 +69,4 @@ fn confidence(games: i64) -> i64 {
     } else {
         70
     }
-}
-
-fn now() -> i64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_millis() as i64
 }

@@ -1,6 +1,6 @@
 use tauri::AppHandle;
 
-use crate::db::games::model::Game;
+use crate::db::games::model::GameListItem;
 use crate::services::games;
 
 #[tauri::command]
@@ -9,7 +9,7 @@ pub async fn sync_games(app: AppHandle) -> Result<games::SyncGamesResult, String
 }
 
 #[tauri::command]
-pub fn get_games(app: AppHandle, limit: Option<u32>) -> Result<Vec<Game>, String> {
+pub fn get_games(app: AppHandle, limit: Option<u32>) -> Result<Vec<GameListItem>, String> {
     games::get_my_games(app, limit.unwrap_or(100000))
 }
 

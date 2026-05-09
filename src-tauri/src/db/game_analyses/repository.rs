@@ -1,4 +1,6 @@
-use rusqlite::{params, Connection};
+use std::collections::HashMap;
+
+use rusqlite::{params, params_from_iter, Connection};
 
 use super::model::{GameAnalysisRow, KeyMomentRow, PatternTagRow};
 
@@ -320,6 +322,98 @@ pub fn find_similar_by_moment_kind(
         ",
     )?;
     let rows = stmt.query_map(params![user_id, kind, game_id, lim], |row| row.get::<_, String>(0))?;
+    let mut v = Vec::new();
+    for r in rows {
+        v.push(r?);
+    }
+    Ok(v)
+}
+
+/// Completed analyses for the given game ids (typically the user's recent games).
+pub fn load_done_analyses_by_game_ids(
+    conn: &Connection,
+    game_ids: &[String],
+) -> rusqlite::Result<HashMap<String, GameAnalysisRow>> {
+    if game_ids.is_empty() {
+        return Ok(HashMap::new());
+    }
+
+    let placeholders = game_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+    let sql = format!(
+        "
+        SELECT
+            game_id, user_id, status, depth,
+            accuracy, avg_centipawn_loss, max_advantage_cp, min_advantage_cp,
+            blunders, mistakes, inaccuracies,
+            eval_history_json, key_moments_json, key_insight_json, system_connection_json,
+            created_at, updated_at, error
+        FROM game_analyses
+        WHERE status = 'done' AND game_id IN ({placeholders})
+        "
+    );
+
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params_from_iter(game_ids.iter().map(|s| s.as_str())), |row| {
+        Ok(GameAnalysisRow {
+            game_id: row.get(0)?,
+            user_id: row.get(1)?,
+            status: row.get(2)?,
+            depth: row.get(3)?,
+            accuracy: row.get(4)?,
+            avg_centipawn_loss: row.get(5)?,
+            max_advantage_cp: row.get(6)?,
+            min_advantage_cp: row.get(7)?,
+            blunders: row.get(8)?,
+            mistakes: row.get(9)?,
+            inaccuracies: row.get(10)?,
+            eval_history_json: row.get(11)?,
+            key_moments_json: row.get(12)?,
+            key_insight_json: row.get(13)?,
+            system_connection_json: row.get(14)?,
+            created_at: row.get(15)?,
+            updated_at: row.get(16)?,
+            error: row.get(17)?,
+        })
+    })?;
+
+    let mut map = HashMap::new();
+    for r in rows {
+        let row = r?;
+        map.insert(row.game_id.clone(), row);
+    }
+    Ok(map)
+}
+
+/// Key moments for insight aggregation (middlegame vs endgame errors).
+pub fn load_key_moments_by_game_ids(
+    conn: &Connection,
+    game_ids: &[String],
+) -> rusqlite::Result<Vec<KeyMomentRow>> {
+    if game_ids.is_empty() {
+        return Ok(vec![]);
+    }
+
+    let placeholders = game_ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+    let sql = format!(
+        "
+        SELECT game_id, user_id, ply, kind, swing_cp
+        FROM game_key_moments
+        WHERE game_id IN ({placeholders})
+        ORDER BY game_id, ply
+        "
+    );
+
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params_from_iter(game_ids.iter().map(|s| s.as_str())), |row| {
+        Ok(KeyMomentRow {
+            game_id: row.get(0)?,
+            user_id: row.get(1)?,
+            ply: row.get(2)?,
+            kind: row.get(3)?,
+            swing_cp: row.get(4)?,
+        })
+    })?;
+
     let mut v = Vec::new();
     for r in rows {
         v.push(r?);

@@ -12,6 +12,7 @@ pub fn init(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     crate::db::users::schema::init_users_table(&conn);
     crate::db::games::schema::init_games_table(&conn);
     crate::db::insights::schema::init_insights_table(&conn);
+    crate::db::insight_day_history::schema::init_insight_day_history_table(&conn);
     crate::db::game_analyses::schema::init_game_analyses_tables(&conn);
 
     Ok(())

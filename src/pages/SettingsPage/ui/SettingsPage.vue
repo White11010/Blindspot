@@ -1,10 +1,12 @@
 <template>
   <div class="settings-page">
     <appearance-settings />
+    <analysis-settings class="mt-6" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { AnalysisSettings } from '@/widgets/AnalysisSettings';
 import { AppearanceSettings } from '@/widgets/AppearanceSettings';
 </script>
 

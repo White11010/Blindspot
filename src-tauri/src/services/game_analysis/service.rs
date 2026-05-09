@@ -127,6 +127,10 @@ fn stored_to_full(stored: ga_repo::GameAnalysisStored) -> Result<GameAnalysisFul
             count: 0,
             window: 10,
             secondary_text: None,
+            primary_variant: String::new(),
+            secondary_variant: "none".into(),
+            secondary_total: 0,
+            secondary_wr_pct: 0.0,
         }),
         eval_history: serde_json::from_str(
             stored
@@ -360,6 +364,10 @@ pub fn analyze_pending_games(app: AppHandle, depth: Option<u8>) -> Result<(), St
                 break;
             }
             let gid = game_id.clone();
+            let _ = app.emit(
+                "game-analysis://analyzing",
+                serde_json::json!({ "game_id": gid.clone() }),
+            );
             let res = analyze_game(&app, &gid, Some(depth)).ok();
 
             done += 1;

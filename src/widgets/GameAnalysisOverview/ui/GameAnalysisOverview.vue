@@ -3,9 +3,9 @@
     <v-card :color="insightColor" variant="tonal">
       <v-card-title class="d-flex align-center ga-2">
         <v-icon icon="mdi-lightbulb-on-outline" />
-        {{ analysis.key_insight.title }}
+        {{ keyInsightTitle }}
       </v-card-title>
-      <v-card-text>{{ analysis.key_insight.description }}</v-card-text>
+      <v-card-text>{{ keyInsightDescription }}</v-card-text>
     </v-card>
 
     <v-row>
@@ -24,11 +24,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+import {
+  getKeyInsightDescription,
+  getKeyInsightTitle,
+} from '@/entities/game-analysis';
 import type { GameAnalysis } from '@/entities/game-analysis';
+import { useI18n } from '@/shared/lib/i18n';
 
 const props = defineProps<{
   analysis: GameAnalysis;
 }>();
+
+const { t, te } = useI18n();
+
+const keyInsightTitle = computed(() => getKeyInsightTitle(props.analysis, t, te));
+const keyInsightDescription = computed(() => getKeyInsightDescription(props.analysis, t, te));
 
 const insightColor = computed(() => {
   switch (props.analysis.key_insight.severity) {
@@ -44,13 +54,19 @@ const insightColor = computed(() => {
 });
 
 const stats = computed(() => [
-  { label: 'Accuracy', value: `${Math.round(props.analysis.accuracy)}%` },
-  { label: 'ACPL', value: Math.round(props.analysis.avg_centipawn_loss) },
-  { label: 'Blunders', value: props.analysis.blunders },
-  { label: 'Mistakes', value: props.analysis.mistakes },
-  { label: 'Inaccuracies', value: props.analysis.inaccuracies },
-  { label: 'Max advantage', value: formatPawns(props.analysis.max_advantage_cp) },
-  { label: 'Min advantage', value: formatPawns(props.analysis.min_advantage_cp) },
+  { label: t('analysis.overviewStats.accuracy'), value: `${Math.round(props.analysis.accuracy)}%` },
+  { label: t('analysis.overviewStats.acpl'), value: Math.round(props.analysis.avg_centipawn_loss) },
+  { label: t('analysis.overviewStats.blunders'), value: props.analysis.blunders },
+  { label: t('analysis.overviewStats.mistakes'), value: props.analysis.mistakes },
+  { label: t('analysis.overviewStats.inaccuracies'), value: props.analysis.inaccuracies },
+  {
+    label: t('analysis.overviewStats.maxAdvantage'),
+    value: formatPawns(props.analysis.max_advantage_cp),
+  },
+  {
+    label: t('analysis.overviewStats.minAdvantage'),
+    value: formatPawns(props.analysis.min_advantage_cp),
+  },
 ]);
 
 function formatPawns(cp: number): string {
