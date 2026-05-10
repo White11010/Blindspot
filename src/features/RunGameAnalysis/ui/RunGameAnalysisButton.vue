@@ -13,6 +13,8 @@
 </template>
 
 <script setup lang="ts">
+// Feature slice: encapsulates one user flow or form; parent pages/widgets compose it and pass props/events.
+
 import { invoke } from '@tauri-apps/api/core';
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';

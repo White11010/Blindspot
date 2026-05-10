@@ -1,3 +1,4 @@
+// White vs black performance gap insight when both samples are large enough to avoid color whiplash noise.
 use serde_json::json;
 
 use crate::db::games::model::Game;
@@ -12,6 +13,7 @@ struct SideStats {
     draws: i64,
 }
 
+/// One `tactics_side_performance`-style card if win-rate gap between colors exceeds ~8 percentage points.
 pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
     let mut white = SideStats::default();
     let mut black = SideStats::default();

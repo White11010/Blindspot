@@ -1,6 +1,8 @@
+// Opens app.db under the Tauri app data dir and runs one-time schema init for all tables.
 use rusqlite::Connection;
 use tauri::{AppHandle, Manager};
 
+/// Creates app.db if needed and applies table DDL from each schema module (startup via `lib::run` setup).
 pub fn init(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let path = app.path().app_data_dir()?.join("app.db");
     println!("{:?}", path);
@@ -18,6 +20,7 @@ pub fn init(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Opens a new connection to the same app.db path; services use this per command instead of pooling.
 pub fn get_conn(app: &AppHandle) -> Result<Connection, String> {
     let path = app
         .path()

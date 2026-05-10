@@ -1,3 +1,4 @@
+// Thin `#[tauri::command]` handlers registered in `lib.rs`; each delegates to `services` or `db` via one call.
 pub mod app;
 pub mod auth;
 pub mod engine;

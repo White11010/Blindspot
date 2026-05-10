@@ -12,6 +12,7 @@ export const BACKEND_PATTERN_TAG_IDS = [
   'multiple_blunders',
   'slow_drift',
   'low_accuracy',
+  'late_game_loss',
 ] as const;
 
 export type BackendPatternTagId = (typeof BACKEND_PATTERN_TAG_IDS)[number];

@@ -1,3 +1,4 @@
+// Spawns bundled Stockfish, speaks UCI over stdin/stdout, and exposes a process-global singleton for reuse across invokes.
 use std::io::{BufRead, BufReader, Write};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
 use std::sync::{Arc, Mutex};
@@ -14,6 +15,7 @@ pub struct StockfishEngine {
 }
 
 impl StockfishEngine {
+    /// Starts the engine binary from dev `resources/` or packaged `BaseDirectory::Resource`, then completes UCI handshake.
     pub fn new(app: &AppHandle) -> Result<Self, String> {
         let engine_path = get_engine_path(app)?;
         println!("Engine path: {:?}", engine_path);
@@ -73,6 +75,7 @@ impl StockfishEngine {
         }
     }
 
+    /// Runs `go depth` from the given FEN and returns last info-line eval plus bestmove (centipawns; mate → ±10000 sentinel).
     pub fn analyze(&mut self, fen: &str, depth: u8) -> Result<EngineResult, String> {
         self.send(&format!("position fen {}", fen))?;
         self.send(&format!("go depth {}", depth))?;
@@ -129,6 +132,7 @@ fn parse_score(line: &str) -> Option<i32> {
                 "cp" => return parts[i + 2].parse::<i32>().ok(),
                 "mate" => {
                     let m = parts[i + 2].parse::<i32>().ok()?;
+                    // Large sentinel keeps mate scores ordered vs centipawns without floating-point in the UI pipeline.
                     return Some(if m > 0 { 10_000 } else { -10_000 });
                 }
                 _ => {}
@@ -161,6 +165,7 @@ fn get_engine_path(app: &AppHandle) -> Result<std::path::PathBuf, String> {
     Ok(path)
 }
 
+/// Shared handle to the optional running process; commands lock this instead of spawning Stockfish per request.
 pub fn get_engine() -> Arc<Mutex<Option<StockfishEngine>>> {
     ENGINE.clone()
 }

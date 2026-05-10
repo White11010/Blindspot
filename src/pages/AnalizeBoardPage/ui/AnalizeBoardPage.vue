@@ -12,6 +12,8 @@
 </template>
 
 <script setup lang="ts">
+// Route-level page: composes features/widgets for this screen and wires page-local queries or navigation.
+
 import { Chess } from 'chess.js';
 import { ref } from 'vue';
 

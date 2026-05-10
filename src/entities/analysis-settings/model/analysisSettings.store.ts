@@ -1,6 +1,7 @@
+// User toggle for whether the app may kick off background Stockfish batches after sync (persisted in localStorage).
 import { defineStore } from 'pinia';
 
-const STORAGE_KEY = 'app-background-analysis';
+const STORAGE_KEY = 'app-background-analysis'; // Isolated key so clearing unrelated prefs does not reset this choice.
 
 function readInitial(): boolean {
   try {
@@ -15,6 +16,7 @@ function readInitial(): boolean {
 }
 
 export const useAnalysisSettingsStore = defineStore('analysis-settings', {
+  // `backgroundAnalysisEnabled` is read before scheduling post-sync analysis; settings UI is the primary writer.
   state: () => ({
     backgroundAnalysisEnabled: readInitial(),
   }),

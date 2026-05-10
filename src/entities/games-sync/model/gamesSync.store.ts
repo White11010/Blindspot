@@ -1,3 +1,4 @@
+// Lichess `sync_games` orchestration: manual/auto triggers, rate-limit backoff, snackbars, and post-sync insight regen.
 import { invoke } from '@tauri-apps/api/core';
 import { defineStore } from 'pinia';
 
@@ -12,15 +13,16 @@ export interface SyncGamesInvokeResult {
   last_sync_completed_at_ms: number;
 }
 
-const MANUAL_COOLDOWN_MS = 2 * 60 * 1000;
-const RATE_LIMIT_RETRY_MS = 60 * 1000;
-const AUTO_SYNC_DEBOUNCE_MS = 3000;
+const MANUAL_COOLDOWN_MS = 2 * 60 * 1000; // Prevents hammering Lichess when users mash sync—429s hurt all API consumers.
+const RATE_LIMIT_RETRY_MS = 60 * 1000; // Matches typical Lichess throttle window before an automatic retry is safe.
+const AUTO_SYNC_DEBOUNCE_MS = 3000; // Coalesces burst events (nav + focus) into one import to avoid redundant NDJSON pulls.
 
 function messageIncludes(haystack: unknown, needle: string): boolean {
   return typeof haystack === 'string' && haystack.includes(needle);
 }
 
 export const useGamesSyncStore = defineStore('gamesSync', {
+  // Sidebar + sync features read phase/timers; `runSync` writes and coordinates games store + query invalidation.
   state: () => ({
     lastSyncedAt: null as number | null,
     phase: 'idle' as 'idle' | 'syncing' | 'error' | 'rate_limited',

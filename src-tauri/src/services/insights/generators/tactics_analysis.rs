@@ -1,3 +1,4 @@
+// Middlegame vs endgame error mix and related tactical summaries from `KeyMomentRow` joined to completed analyses.
 use std::collections::{HashMap, HashSet};
 
 use serde_json::json;
@@ -11,6 +12,7 @@ fn is_error_kind(k: &str) -> bool {
     matches!(k, "blunder" | "mistake" | "inaccuracy")
 }
 
+/// Emits `CAT_TACTICS` insights when error counts across phases cross tuned thresholds (see in-file magic numbers).
 pub fn generate(
     user_id: &str,
     games: &[Game],
@@ -19,7 +21,7 @@ pub fn generate(
 ) -> Vec<Insight> {
     let mut out = Vec::new();
 
-    // Middlegame (ply <= 50) vs endgame (>50) — key moments tagged as errors
+    // Ply 50 split is a cheap phase proxy vs running FEN-based phase detection on every historical game.
     let mut mg_err = 0i64;
     let mut eg_err = 0i64;
     let mut games_with_moments: HashSet<String> = HashSet::new();
@@ -71,50 +73,11 @@ pub fn generate(
                 "eg_share": eg_share_r
             }),
         ));
-        let _ = mg_share; // used only implicitly in summary
+        let _ = mg_share;
     }
 
-    // Max streak of games without a blunder (analyzed games only; missing analysis breaks streak)
-    let mut sorted: Vec<&Game> = games.iter().collect();
-    sorted.sort_by_key(|g| g.created_at);
-    let mut cur = 0i64;
-    let mut best = 0i64;
-    for g in &sorted {
-        match analyses.get(&g.id) {
-            Some(a) if a.status == "done" => {
-                if a.blunders.unwrap_or(0) == 0 {
-                    cur += 1;
-                    best = best.max(cur);
-                } else {
-                    cur = 0;
-                }
-            }
-            _ => cur = 0,
-        }
-    }
-    if best >= 4 {
-        out.push(build_insight(
-            format!("tactics_noblunder_streak_{user_id}"),
-            user_id,
-            "tactics_blunder_streak",
-            CAT_TACTICS,
-            "Серия без зевков".to_string(),
-            format!("Максимум подряд партий без зевка (по анализу): {best}."),
-            "good",
-            80,
-            Some("Партий подряд".to_string()),
-            Some(format!("{best}")),
-            Some(best as f64),
-            Some("Качество решений в этих партиях было высоким.".to_string()),
-            "tactics:no_blunder_streak",
-            74,
-            json!({ "best": best }),
-        ));
-    }
-
-    // Failed conversion: had >= +2.0 advantage, did not win
-    let mut with_adv = 0i64;
-    let mut failed = 0i64;
+    // Failed conversion: had >= +2.0 advantage, did not win — with time-control breakdown
+    let mut by_speed: HashMap<String, (i64, i64)> = HashMap::new();
     for g in games {
         let Some(a) = analyses.get(&g.id) else {
             continue;
@@ -125,14 +88,51 @@ pub fn generate(
         if a.max_advantage_cp.unwrap_or(0) < 200 {
             continue;
         }
-        with_adv += 1;
+        let label = match g.speed.as_str() {
+            "bullet" => "Bullet",
+            "blitz" => "Blitz",
+            "rapid" => "Rapid",
+            "classical" => "Classical",
+            other => other,
+        };
+        let e = by_speed.entry(label.to_string()).or_insert((0, 0));
+        e.0 += 1;
         if g.player_result != "win" {
-            failed += 1;
+            e.1 += 1;
         }
     }
+
+    let mut with_adv = 0i64;
+    let mut failed = 0i64;
+    for (w, f) in by_speed.values() {
+        with_adv += w;
+        failed += f;
+    }
+
     if with_adv >= 8 {
         let rate = (failed as f64 / with_adv as f64) * 100.0;
         let rate_r = rate.round();
+
+        let mut parts: Vec<String> = Vec::new();
+        let mut breakdown = serde_json::Map::new();
+        for (label, (w, f)) in &by_speed {
+            if *w < 3 {
+                continue;
+            }
+            let r = (*f as f64 / *w as f64 * 100.0).round() as i64;
+            parts.push(format!("{label}: {r}% ({f}/{w})"));
+            breakdown.insert(
+                label.clone(),
+                json!({ "with_adv": w, "failed": f, "rate": r }),
+            );
+        }
+        let by_line = if parts.is_empty() {
+            String::new()
+        } else {
+            format!(" {}", parts.join(" · "))
+        };
+        let speed_split = parts.join(" · ");
+
         out.push(build_insight(
             format!("tactics_conversion_{user_id}"),
             user_id,
@@ -140,7 +140,7 @@ pub fn generate(
             CAT_TACTICS,
             "Конверсия выигранных позиций".to_string(),
             format!(
-                "В {with_adv} партиях был перевес ≥+2.0, но {failed} закончились не победой ({rate_r}%)."
+                "В {with_adv} партиях был перевес ≥+2.0, но {failed} закончились не победой ({rate_r}%).{by_line}"
             ),
             if rate > 35.0 { "warning" } else { "info" },
             82,
@@ -150,9 +150,21 @@ pub fn generate(
             Some("Потренируй техническую реализацию и контроль времени.".to_string()),
             "tactics:failed_conversion_rate",
             86,
-            json!({ "with_adv": with_adv, "failed": failed, "rate": rate_r }),
+            json!({
+                "with_adv": with_adv,
+                "failed": failed,
+                "rate": rate_r,
+                "speed_split": speed_split,
+                "by_speed": serde_json::Value::Object(breakdown)
+            }),
         ));
     }
+
+    out.extend(
+        crate::services::insights::generators::tactics_phase_accuracy::generate(
+            user_id, games, analyses,
+        ),
+    );
 
     out
 }

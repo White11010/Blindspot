@@ -1,5 +1,7 @@
+// DDL and indexes for the `games` table (one row per imported game, keyed by Lichess game id).
 use rusqlite::Connection;
 
+/// Creates `games` and indexes for username, date, speed, opening, and player/opponent ids (list and versus queries).
 pub fn init_games_table(conn: &Connection) {
     conn.execute_batch(
         "

@@ -47,6 +47,8 @@
 </template>
 
 <script setup lang="ts">
+// Feature slice: encapsulates one user flow or form; parent pages/widgets compose it and pass props/events.
+
 import { useMyGamesFiltersStore } from '@/entities/game';
 import { useGamesSyncStore } from '@/entities/games-sync';
 import { formatLastGamesSyncLabel } from '@/entities/games-sync/lib/formatLastGamesSync';

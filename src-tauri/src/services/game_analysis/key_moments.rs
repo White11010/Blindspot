@@ -1,3 +1,4 @@
+// Selects a few worst player moments and enriches them with FEN/SAN for the game detail timeline.
 use shakmaty::fen::Fen;
 use shakmaty::{Chess, EnPassantMode};
 
@@ -13,6 +14,7 @@ fn position_at_prefix(uci_moves: &[String], up_to: usize) -> Result<Chess, Strin
     Ok(pos)
 }
 
+/// Takes top `top_n` bad/brilliant swings by absolute swing, then rebuilds board prefix for SAN and headlines.
 pub fn pick_key_moments(
     uci_moves: &[String],
     classified: &[ClassifiedMove],

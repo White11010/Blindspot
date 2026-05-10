@@ -1,3 +1,4 @@
+// Serde shapes for stored games and list rows returned to the frontend via Tauri commands.
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,7 +43,7 @@ pub struct Game {
     pub pgn: String,
 }
 
-/// Game row plus analysis summary for list views (e.g. My Games filters).
+/// Full `Game` plus optional analysis metrics and pattern tags for My Games and filters.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameListItem {
     #[serde(flatten)]

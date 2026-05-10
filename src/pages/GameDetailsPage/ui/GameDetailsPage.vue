@@ -97,6 +97,8 @@
 </template>
 
 <script setup lang="ts">
+// Route-level page: composes features/widgets for this screen and wires page-local queries or navigation.
+
 import { storeToRefs } from 'pinia';
 import { computed, ref } from 'vue';
 import { useI18n } from '@/shared/lib/i18n';

@@ -1,6 +1,6 @@
 import { normalizePatternTagId } from '@/shared/lib/patternTags';
 
-import type { Game, MyGamesPeriod } from '../model/games.types';
+import type { Game, MyGamesPeriod, MyGamesPlayerColor } from '../model/games.types';
 
 export { normalizePatternTagId };
 
@@ -45,6 +45,7 @@ export function filterMyGames(
     periods: MyGamesPeriod[];
     patternTag: string | null;
     openingValue: string | null;
+    playerColors: MyGamesPlayerColor[];
   },
 ): Game[] {
   const q = opts.searchText.trim().toLowerCase();
@@ -68,6 +69,9 @@ export function filterMyGames(
       }
     }
     if (opts.openingValue && openingKey(g) !== opts.openingValue) {
+      return false;
+    }
+    if (opts.playerColors.length && !opts.playerColors.includes(g.player_color)) {
       return false;
     }
     if (q) {

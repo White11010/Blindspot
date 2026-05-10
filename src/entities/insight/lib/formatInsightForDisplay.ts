@@ -48,12 +48,16 @@ export function getInsightTitle(insight: Insight, t: TFn, te: TeFn): string {
       return t(key);
     }
   }
-  if (k === 'psychology_streak') {
-    const key = bool(p, 'streak_win')
-      ? 'insights.kinds.psychology_streak.titleWins'
-      : 'insights.kinds.psychology_streak.titleLosses';
+  if (k === 'opening_dependency') {
+    const strength = String(p.strength ?? 'neutral');
+    const key =
+      strength === 'strength'
+        ? 'insights.kinds.opening_dependency.titleStrength'
+        : strength === 'risk'
+          ? 'insights.kinds.opening_dependency.titleRisk'
+          : 'insights.kinds.opening_dependency.titleNeutral';
     if (te(key)) {
-      return t(key);
+      return t(key, p);
     }
   }
   const key = kindKey(k, 'title');
@@ -72,11 +76,51 @@ export function getInsightSummary(insight: Insight, t: TFn, te: TeFn): string {
     const worse = morningBetter ? t('insights.slots.evening') : t('insights.slots.morning');
     p.better = better;
     p.worse = worse;
+    const tz =
+      typeof p.timezone_note === 'string' && p.timezone_note
+        ? p.timezone_note
+        : typeof p.timezone_offset_minutes === 'number'
+          ? String(p.timezone_offset_minutes)
+          : '';
+    p.timezone_caption = tz ? t('insights.kinds.time_morning_vs_evening.timezoneCaption', { tz }) : '';
     const key = morningBetter
       ? 'insights.kinds.time_morning_vs_evening.summaryMorningBetter'
       : 'insights.kinds.time_morning_vs_evening.summaryEveningBetter';
     if (te(key)) {
       return t(key, p);
+    }
+  }
+  if (k === 'tactics_conversion_advantage') {
+    const split = typeof p.speed_split === 'string' ? p.speed_split.trim() : '';
+    if (split && te('insights.kinds.tactics_conversion_advantage.summaryWithSpeeds')) {
+      p.speed_split = split;
+      return t('insights.kinds.tactics_conversion_advantage.summaryWithSpeeds', p);
+    }
+  }
+  if (k === 'opening_dependency') {
+    const strength = String(p.strength ?? 'neutral');
+    const sk =
+      strength === 'strength'
+        ? 'insights.kinds.opening_dependency.summaryStrength'
+        : strength === 'risk'
+          ? 'insights.kinds.opening_dependency.summaryRisk'
+          : 'insights.kinds.opening_dependency.summaryNeutral';
+    if (te(sk)) {
+      return t(sk, p);
+    }
+  }
+  if (k === 'opening_color_split') {
+    const sc = String(p.stronger_color ?? '');
+    const wc = String(p.weaker_color ?? '');
+    p.stronger_side = sc === 'white' ? t('myGames.toolbar.colors.white') : t('myGames.toolbar.colors.black');
+    p.weaker_side = wc === 'white' ? t('myGames.toolbar.colors.white') : t('myGames.toolbar.colors.black');
+    if (te('insights.kinds.opening_color_split.summary')) {
+      return t('insights.kinds.opening_color_split.summary', p);
+    }
+  }
+  if (k === 'opening_trend') {
+    if (te('insights.kinds.opening_trend.summary')) {
+      return t('insights.kinds.opening_trend.summary', p);
     }
   }
   const key = kindKey(k, 'summary');
@@ -97,12 +141,16 @@ export function getInsightRecommendation(insight: Insight, t: TFn, te: TeFn): st
       return t(key, p);
     }
   }
-  if (k === 'psychology_streak') {
-    const key = bool(p, 'streak_win')
-      ? 'insights.kinds.psychology_streak.recommendationWins'
-      : 'insights.kinds.psychology_streak.recommendationLosses';
-    if (te(key)) {
-      return t(key, p);
+  if (k === 'opening_dependency') {
+    const strength = String(p.strength ?? 'neutral');
+    const rk =
+      strength === 'strength'
+        ? 'insights.kinds.opening_dependency.recommendationStrength'
+        : strength === 'risk'
+          ? 'insights.kinds.opening_dependency.recommendationRisk'
+          : 'insights.kinds.opening_dependency.recommendationNeutral';
+    if (te(rk)) {
+      return t(rk, p);
     }
   }
   const key = kindKey(k, 'recommendation');
@@ -119,6 +167,8 @@ export function getInsightMetricLabel(insight: Insight, t: TFn, te: TeFn): strin
     opening_worst_frequent: 'insights.metrics.winrate',
     opening_rare_gem: 'insights.metrics.winrate',
     opening_dependency: 'insights.metrics.gameShare',
+    opening_color_split: 'insights.metrics.winrateGapPp',
+    opening_trend: 'insights.metrics.trendDeltaPp',
     time_control_best: 'insights.metrics.winrate',
     time_control_worst: 'insights.metrics.winrate',
     time_rating_growth_30d: 'insights.metrics.ratingDelta',
@@ -126,11 +176,13 @@ export function getInsightMetricLabel(insight: Insight, t: TFn, te: TeFn): strin
     tactics_late_game_losses: 'insights.metrics.shareOfGames',
     tactics_side_performance: 'insights.metrics.winrateGapPp',
     tactics_middlegame_vs_endgame: 'insights.metrics.endgameErrorShare',
-    tactics_blunder_streak: 'insights.metrics.gamesInRow',
     tactics_conversion_advantage: 'insights.metrics.failedToWinPct',
+    tactics_accuracy_by_phase: 'insights.metrics.weakestPhaseAccuracy',
     psychology_tilt: 'insights.metrics.winrate',
     psychology_comeback: 'insights.metrics.winrate',
-    psychology_streak: 'insights.metrics.streakLength',
+    psychology_rest_effect: 'insights.metrics.accuracyDropPp',
+    opponent_rating_performance: 'insights.metrics.winrateVsStronger',
+    time_games_per_day_pattern: 'insights.metrics.winrateLightDays',
   };
   const labelKey = map[k];
   if (labelKey && te(labelKey)) {

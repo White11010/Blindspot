@@ -1,7 +1,9 @@
+// Maps Lichess games API NDJSON lines into `Game` rows (player perspective, result, opening, PGN fields).
 use serde_json::Value;
 
 use crate::db::games::model::Game;
 
+/// Parses each non-empty line as JSON; skips malformed lines so one bad chunk does not fail the whole sync batch.
 pub fn parse_ndjson(username: &str, ndjson: &str) -> Vec<Game> {
     let mut games = Vec::new();
 
@@ -25,6 +27,7 @@ pub fn parse_ndjson(username: &str, ndjson: &str) -> Vec<Game> {
     games
 }
 
+// API omits fields on variants; we require `id` and both players so anonymous or broken lines become None.
 fn map_game(username: &str, json: &Value) -> Option<Game> {
     let id = get_string(json, "id")?;
 
@@ -68,6 +71,7 @@ fn map_game(username: &str, json: &Value) -> Option<Game> {
     let white_rating = white.get("rating").and_then(Value::as_i64);
     let black_rating = black.get("rating").and_then(Value::as_i64);
 
+    // Match by name or id so sync works whether the API returns display name or stable Lichess id as username input.
     let is_white_player =
         username.eq_ignore_ascii_case(&white_name) || username.eq_ignore_ascii_case(&white_id);
 
@@ -199,4 +203,78 @@ fn nested_string(value: &Value, path: &[&str]) -> Option<String> {
     }
 
     current.as_str().map(str::to_string)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Минимальная строка в формате NDJSON API Lichess (одна партия на строку).
+    fn sample_game_line() -> &'static str {
+        r#"{"id":"abc123","rated":true,"speed":"blitz","createdAt":1700000000,"pgn":"[Event \"?\"]\n","players":{"white":{"user":{"name":"Alice","id":"alice1"},"rating":2000},"black":{"user":{"name":"Bob","id":"bob1"},"rating":1900}},"clock":{"initial":180,"increment":2},"winner":"white","opening":{"eco":"B20","name":"Sicilian Defense"}}"#
+    }
+
+    #[test]
+    fn parse_ndjson_maps_game_for_logged_in_white_player() {
+        let games = parse_ndjson("alice1", sample_game_line());
+
+        assert_eq!(games.len(), 1);
+        let g = &games[0];
+        assert_eq!(g.id, "abc123");
+        assert_eq!(g.username, "alice1");
+        assert_eq!(g.platform, "Lichess");
+        assert!(g.rated);
+        assert_eq!(g.speed, "blitz");
+        assert_eq!(g.created_at, 1_700_000_000);
+        assert_eq!(g.player_color, "white");
+        assert_eq!(g.player_result, "win");
+        assert_eq!(g.player_name, "Alice");
+        assert_eq!(g.opponent_name, "Bob");
+        assert_eq!(g.opponent_id, "bob1");
+        assert_eq!(g.white_rating, Some(2000));
+        assert_eq!(g.black_rating, Some(1900));
+        assert_eq!(g.player_rating, Some(2000));
+        assert_eq!(g.opponent_rating, Some(1900));
+        assert_eq!(g.time_control, "180+2");
+        assert_eq!(g.opening_eco.as_deref(), Some("B20"));
+        assert_eq!(g.opening_name.as_deref(), Some("Sicilian Defense"));
+        assert_eq!(g.winner.as_deref(), Some("white"));
+    }
+
+    #[test]
+    fn parse_ndjson_resolves_black_perspective_and_loss() {
+        let games = parse_ndjson("bob1", sample_game_line());
+        assert_eq!(games.len(), 1);
+        let g = &games[0];
+        assert_eq!(g.player_color, "black");
+        assert_eq!(g.player_result, "loss");
+        assert_eq!(g.player_rating, Some(1900));
+        assert_eq!(g.opponent_rating, Some(2000));
+    }
+
+    #[test]
+    fn parse_ndjson_skips_empty_lines_and_invalid_json() {
+        let ndjson = format!(
+            "\n\nnot valid json\n{}\n",
+            sample_game_line()
+        );
+        let games = parse_ndjson("alice1", &ndjson);
+        assert_eq!(games.len(), 1);
+        assert_eq!(games[0].id, "abc123");
+    }
+
+    #[test]
+    fn parse_ndjson_resolves_draw_when_winner_missing() {
+        let line = r#"{"id":"draw1","rated":false,"speed":"rapid","createdAt":1700000001,"players":{"white":{"user":{"name":"Alice","id":"alice1"},"rating":2100},"black":{"user":{"name":"Bob","id":"bob1"},"rating":2090}}}"#;
+
+        let white = &parse_ndjson("alice1", line)[0];
+        assert_eq!(white.player_result, "draw");
+        assert_eq!(white.player_color, "white");
+        assert_eq!(white.winner, None);
+
+        let black = &parse_ndjson("bob1", line)[0];
+        assert_eq!(black.player_result, "draw");
+        assert_eq!(black.player_color, "black");
+        assert_eq!(black.winner, None);
+    }
 }

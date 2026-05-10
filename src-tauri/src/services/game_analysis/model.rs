@@ -1,3 +1,4 @@
+// JSON-friendly DTOs returned by `game_analysis` commands and stored as blobs on `game_analyses` rows.
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

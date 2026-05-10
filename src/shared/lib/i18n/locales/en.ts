@@ -39,6 +39,7 @@ export default {
       result: 'Result',
       timeControl: 'Time control',
       period: 'Period',
+      pieceColor: 'Your color',
       pattern: 'Pattern',
       opening: 'Opening',
       resetFilters: 'Reset filters',
@@ -58,6 +59,10 @@ export default {
         d30: '30 days',
         d90: '90 days',
         all: 'All time',
+      },
+      colors: {
+        white: 'White',
+        black: 'Black',
       },
     },
     table: {
@@ -88,6 +93,7 @@ export default {
       multiple_blunders: 'Multiple blunders',
       slow_drift: 'Slow drift (no blunders, high ACPL)',
       low_accuracy: 'Low accuracy',
+      late_game_loss: 'Long game loss (≥40 moves)',
     },
   },
   ...shellRest,

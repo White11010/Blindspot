@@ -1,11 +1,4 @@
-//! Daily insight rotation for Home.
-//!
-//! Rules (see product spec):
-//! - Do not show the same `insight_id` on **three consecutive calendar days** (checked via history).
-//! - Prefer insights with a larger absolute delta (`metric_number` vs `metric_prev`).
-//! - Prefer categories that have not been the daily pick for the longest time.
-//! - Fallback: pseudo-random choice among the top 5 by composite score.
-//! - Additionally, avoid repeating the same `insight_id` within the **last 7 calendar days** when possible.
+//! Picks one hero insight per local calendar day using history, metric deltas, and category spacing (see `pick_daily_insight`).
 
 use std::collections::{HashMap, HashSet};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -16,11 +9,12 @@ use rusqlite::Connection;
 use crate::db::insight_day_history::repository as day_hist;
 use crate::db::insights::model::Insight;
 
+/// Local `YYYY-MM-DD` string key for `insight_day_history` rows (matches user’s OS timezone expectations on Home).
 pub fn local_today_ymd() -> String {
     Local::now().date_naive().format("%Y-%m-%d").to_string()
 }
 
-/// Choose today's daily insight (does **not** persist — caller inserts into `insight_day_history`).
+/// Scores candidates with anti-repeat rules; caller persists to keep DB writes out of pure selection for easier tests.
 pub fn pick_daily_insight(
     conn: &Connection,
     user_id: &str,

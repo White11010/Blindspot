@@ -1,5 +1,7 @@
+// DDL for daily insight pick history (dedupe by user+date primary key).
 use rusqlite::Connection;
 
+/// Creates `insight_day_history` and an index for listing recent picks by user and date descending.
 pub fn init_insight_day_history_table(conn: &Connection) {
     conn.execute_batch(
         "

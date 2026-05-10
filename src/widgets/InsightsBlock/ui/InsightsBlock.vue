@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex flex-column ga-6">
+  <div class="d-flex flex-column ga-6 w-100 min-w-0">
     <header>
       <h1 class="text-h5 font-weight-medium mb-1">{{ t('insightsPage.title') }}</h1>
       <p class="text-body-2 text-medium-emphasis mb-0">{{ pageSubtitle }}</p>
@@ -74,6 +74,8 @@
 </template>
 
 <script setup lang="ts">
+// Composite widget: presents a focused dashboard block; reads shared Pinia stores and Tauri invoke where needed.
+
 import { keepPreviousData, useQuery } from '@tanstack/vue-query';
 import { invoke } from '@tauri-apps/api/core';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -92,12 +94,14 @@ const insightsStore = useInsightsStore();
 const gamesStore = useGamesStore();
 const gamesQuery = useSyncGamesQuery();
 
+// Rapid pentagon matches the main serious-chess KPI users expect when comparing accuracy to population benchmarks.
 const PROFILE_SPEED = 'rapid' as const;
 
 const profileQuery = useQuery({
   queryKey: ['playerProfileChart', 'insightsKpi', PROFILE_SPEED],
   queryFn: async () =>
     invoke<PlayerProfileChartResponse>('get_player_profile_chart', { speed: PROFILE_SPEED }),
+  // Benchmark polygons change slowly; 30m stale avoids hammering Rust while keeping KPIs fresh enough after sync.
   staleTime: 1000 * 60 * 30,
   placeholderData: keepPreviousData,
 });
@@ -107,6 +111,7 @@ let tickId: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
   void insightsStore.load();
+  // Recompute updated-N-min-ago strings on a coarse timer so we do not depend on navigation to refresh copy.
   tickId = setInterval(() => {
     nowTick.value = Date.now();
   }, 30_000);

@@ -1,3 +1,4 @@
+// Serializable insight card returned to Vue; matches DB columns including optional metric deltas and expiry.
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

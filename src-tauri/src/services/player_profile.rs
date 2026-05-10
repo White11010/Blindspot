@@ -1,4 +1,4 @@
-//! Player pentagon vs population benchmarks (home profile chart).
+//! Home profile chart: user pentagon from recent rated DB games vs embedded benchmark for the same speed bucket.
 use serde::Serialize;
 use tauri::AppHandle;
 
@@ -7,7 +7,7 @@ use crate::db::users::repository as users_repository;
 use crate::services::benchmarks::{self};
 use crate::services::versus_metrics::{MetricGameRow, PentagonDto, pentagon_from_metrics};
 
-const THIRTY_DAYS_MS: i64 = 30 * 24 * 60 * 60 * 1000;
+const THIRTY_DAYS_MS: i64 = 30 * 24 * 60 * 60 * 1000; // Rolling month matches typical current-form expectations in UI.
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -39,6 +39,7 @@ fn rating_for_speed(user: &crate::db::users::model::User, speed: &str) -> Option
     }
 }
 
+/// Builds benchmark + optional player pentagon for bullet/blitz/rapid from analyzed games in the last 30 days.
 pub fn get_player_profile_chart(app: &AppHandle, speed: String) -> Result<PlayerProfileChartResponse, String> {
     let speed_lc = speed.to_lowercase();
     if !matches!(speed_lc.as_str(), "bullet" | "blitz" | "rapid") {
@@ -56,6 +57,7 @@ pub fn get_player_profile_chart(app: &AppHandle, speed: String) -> Result<Player
         .ok_or_else(|| format!("Unknown benchmark bucket: {}", bucket_key))?;
     let benchmark = PentagonDto::from(bench_pentagon);
 
+    // Exclude older games so the chart reflects recent performance, not lifetime average mixed into one polygon.
     let cutoff = now_millis() - THIRTY_DAYS_MS;
 
     let mut stmt = conn

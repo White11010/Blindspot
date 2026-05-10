@@ -1,3 +1,4 @@
+// Business logic between Tauri commands and db/clients (sync, analysis, insights, engine, versus).
 pub mod app;
 pub mod auth;
 pub mod benchmarks;

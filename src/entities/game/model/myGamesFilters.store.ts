@@ -1,8 +1,9 @@
+// My Games toolbar + table: filter/sort snapshot persisted in sessionStorage so navigation does not reset user choices.
 import { defineStore } from 'pinia';
 
-import type { MyGamesPeriod } from './games.types';
+import type { MyGamesPeriod, MyGamesPlayerColor } from './games.types';
 
-const STORAGE_KEY = 'chessanalytics:myGamesFilters';
+const STORAGE_KEY = 'chessanalytics:myGamesFilters'; // sessionStorage scope: per tab session, not long-lived like prefs.
 
 /** Vuetify `v-data-table` sort model (single column). */
 export type MyGamesTableSortItem = {
@@ -10,7 +11,7 @@ export type MyGamesTableSortItem = {
   order?: 'asc' | 'desc';
 };
 
-const DEFAULT_SORT_BY: MyGamesTableSortItem[] = [{ key: 'created_at', order: 'desc' }];
+const DEFAULT_SORT_BY: MyGamesTableSortItem[] = [{ key: 'created_at', order: 'desc' }]; // Newest first matches Lichess habit.
 
 const SORTABLE_KEYS = new Set([
   'created_at',
@@ -57,6 +58,8 @@ export interface MyGamesFiltersSnapshot {
   periods: MyGamesPeriod[];
   patternTag: string | null;
   openingValue: string | null;
+  /** Empty = all colors; matches `Game.player_color`. */
+  playerColors: MyGamesPlayerColor[];
   sortBy: MyGamesTableSortItem[];
 }
 
@@ -68,6 +71,7 @@ function defaultSnapshot(): MyGamesFiltersSnapshot {
     periods: [],
     patternTag: null,
     openingValue: null,
+    playerColors: [],
     sortBy: [...DEFAULT_SORT_BY],
   };
 }
@@ -103,6 +107,7 @@ function saveSnapshot(s: MyGamesFiltersSnapshot) {
 }
 
 export const useMyGamesFiltersStore = defineStore('myGamesFilters', {
+  // Entire snapshot is both state and persistence payload; `persist`/`reset` keep sessionStorage aligned with UI.
   state: (): MyGamesFiltersSnapshot => loadSnapshot(),
 
   actions: {
@@ -114,6 +119,7 @@ export const useMyGamesFiltersStore = defineStore('myGamesFilters', {
         periods: this.periods,
         patternTag: this.patternTag,
         openingValue: this.openingValue,
+        playerColors: [...this.playerColors],
         sortBy: [...this.sortBy],
       });
     },

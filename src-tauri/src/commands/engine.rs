@@ -1,9 +1,11 @@
+// Board analyzer: global Stockfish singleton and single-position eval (`services::engine::stockfish`).
 use tauri::AppHandle;
 
 use crate::services::engine::stockfish::{
     ensure_engine_started, get_engine, EngineResult, StockfishEngine,
 };
 
+/// Eagerly constructs and stores Stockfish (used when UI wants explicit warmup vs lazy `ensure_engine_started`).
 #[tauri::command]
 pub fn init_engine(app: AppHandle) -> Result<(), String> {
     let engine = StockfishEngine::new(&app)?;
@@ -16,6 +18,7 @@ pub fn init_engine(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// One-off `go depth` from FEN for the analysis board; default depth 12 balances snappy UX vs eval stability.
 #[tauri::command]
 pub fn analyze_position(app: AppHandle, fen: String, depth: Option<u8>) -> Result<EngineResult, String> {
     ensure_engine_started(&app)?;

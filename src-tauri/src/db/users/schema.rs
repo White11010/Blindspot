@@ -1,5 +1,7 @@
+// DDL for `users` plus lightweight ALTERs so older installs gain sync columns without a migration tool.
 use rusqlite::Connection;
 
+/// Creates `users` and active-user index; then ensures incremental sync columns exist on legacy databases.
 pub fn init_users_table(conn: &Connection) {
     conn.execute_batch(
         "
@@ -34,7 +36,7 @@ pub fn init_users_table(conn: &Connection) {
     ensure_users_sync_columns(conn);
 }
 
-/// Idempotent migrations for existing DB files (no migration framework in app).
+/// Adds `lichess_since_cursor_ms` / `last_sync_completed_at_ms` if missing so `since` pagination survives upgrades.
 pub fn ensure_users_sync_columns(conn: &Connection) {
     let mut cols: Vec<String> = conn
         .prepare("PRAGMA table_info(users)")

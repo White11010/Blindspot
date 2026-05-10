@@ -1,3 +1,4 @@
+// Active Lichess account mirror in the SPA; fed by `app` bootstrap and settings, consumed anywhere `useUserStore` runs.
 import { invoke } from '@tauri-apps/api/core';
 import { defineStore } from 'pinia';
 
@@ -9,6 +10,7 @@ interface State {
 }
 
 export const useUserStore = defineStore('user', {
+  // `user` is the hydrated profile row; `isLoading` guards concurrent `sync_me` / legacy fetch calls from widgets.
   state: (): State => ({
     user: null,
     isLoading: false,

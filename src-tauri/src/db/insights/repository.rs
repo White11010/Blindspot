@@ -1,7 +1,9 @@
+// Full replace and fetch of insights for one user (regeneration deletes old rows then bulk inserts).
 use rusqlite::{params, Connection};
 
 use super::model::Insight;
 
+/// Deletes all insights for `user_id` then inserts `items` in one transaction so the UI never sees a partial set.
 pub fn replace_user_insights(
     conn: &Connection,
     user_id: &str,
@@ -83,6 +85,7 @@ pub fn replace_user_insights(
     tx.commit()
 }
 
+/// Lists insights for the user ordered by sort priority, confidence, then recency for the Insights page.
 pub fn get_user_insights(conn: &Connection, user_id: &str) -> rusqlite::Result<Vec<Insight>> {
     let mut stmt = conn.prepare(
         "

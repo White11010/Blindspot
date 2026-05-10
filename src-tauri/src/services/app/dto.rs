@@ -1,3 +1,4 @@
+// Serializable bootstrap outcome for the Vue shell: either no token or authorized with optional stale-user hint.
 use serde::Serialize;
 
 use crate::db::users::model::User;

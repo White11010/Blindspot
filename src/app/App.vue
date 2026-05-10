@@ -81,6 +81,8 @@
 </template>
 
 <script setup lang="ts">
+// Root shell: router outlet, global layout chrome, and app bootstrap hooks into Pinia + Vue Query.
+
 import {
   useBackgroundGameAnalysisBridge,
   useBackgroundGameAnalysisOrchestration,

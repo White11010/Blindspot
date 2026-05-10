@@ -2,6 +2,7 @@
   <v-card v-if="user" :title="t('home.greetingTitle')">
     <div class="d-flex align-center flex-wrap ga-2">
       <span>{{ t('home.greetingConnected', { username: user.username }) }}</span>
+      <span v-if="streakLine" class="text-body-2">{{ streakLine }}</span>
       <span class="text-body-2 text-medium-emphasis">
         · {{ updatedLabel }}
       </span>
@@ -25,6 +26,9 @@
 </template>
 
 <script setup lang="ts">
+// Feature slice: encapsulates one user flow or form; parent pages/widgets compose it and pass props/events.
+
+import { computeCurrentResultStreak, useSyncGamesQuery } from '@/entities/game';
 import { useGamesSyncStore } from '@/entities/games-sync';
 import { formatLastGamesSyncLabel } from '@/entities/games-sync/lib/formatLastGamesSync';
 import { useGetUserQuery } from '@/entities/user';
@@ -34,8 +38,19 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const { t } = useI18n();
 const { user } = useGetUserQuery();
+const { games } = useSyncGamesQuery();
 const syncStore = useGamesSyncStore();
 const { lastSyncedAt } = storeToRefs(syncStore);
+
+const streakLine = computed(() => {
+  const s = computeCurrentResultStreak(games.value);
+  if (!s) {
+    return '';
+  }
+  return s.kind === 'win'
+    ? t('home.currentStreakWins', { n: s.length })
+    : t('home.currentStreakLosses', { n: s.length });
+});
 
 const nowTick = ref(Date.now());
 let tickId: ReturnType<typeof setInterval> | undefined;

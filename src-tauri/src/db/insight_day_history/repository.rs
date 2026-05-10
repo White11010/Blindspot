@@ -1,6 +1,7 @@
+// Read/write helpers for the daily insight card rotation (get today, insert pick, list recent anti-repeat).
 use rusqlite::{params, Connection, OptionalExtension};
 
-/// `date` is calendar day `YYYY-MM-DD` (local).
+/// Returns stored `(insight_id, category)` for `date` (`YYYY-MM-DD` local) or None if no pick was persisted yet.
 pub fn get_pick_for_date(
     conn: &Connection,
     user_id: &str,
@@ -20,6 +21,7 @@ pub fn get_pick_for_date(
     Ok(row)
 }
 
+/// Upserts the daily pick so the same calendar day always maps to one insight (idempotent home card behavior).
 pub fn insert_pick(
     conn: &Connection,
     user_id: &str,
@@ -36,6 +38,7 @@ pub fn insert_pick(
     )
 }
 
+/// Clears a day’s pick (e.g. when forcing a new rotation); next read returns None for that date.
 pub fn delete_pick_for_date(conn: &Connection, user_id: &str, date: &str) -> rusqlite::Result<usize> {
     conn.execute(
         "DELETE FROM insight_day_history WHERE user_id = ?1 AND date = ?2",
@@ -43,7 +46,7 @@ pub fn delete_pick_for_date(conn: &Connection, user_id: &str, date: &str) -> rus
     )
 }
 
-/// Recent picks from `from_date` inclusive (typically today minus 7 days).
+/// Lists picks with `date >= from_date` for anti-repeat logic when choosing a new daily insight (recent window).
 pub fn list_history_since(
     conn: &Connection,
     user_id: &str,

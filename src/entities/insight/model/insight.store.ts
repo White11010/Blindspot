@@ -1,3 +1,4 @@
+// Insights page + home hero: loads/regenerates cards via Tauri and tracks daily pick separately from the full list.
 import { invoke } from '@tauri-apps/api/core';
 import { defineStore } from 'pinia';
 
@@ -13,12 +14,13 @@ interface State {
 
   lastLoadedAt: number | null;
 
-  /** Calendar day `YYYY-MM-DD` (local) for which `dailyInsight` was resolved. */
+  // Local calendar day (`en-CA`) for which `dailyInsight` was fetched—prevents duplicate `get_daily_insight` per day.
   dailyPickedForDate: string | null;
   dailyInsight: Insight | null;
 }
 
 export const useInsightsStore = defineStore('insights', {
+  // Insights list, loading flags, and hero card state; home + insights routes read getters, actions call `invoke`.
   state: (): State => ({
     items: [],
 

@@ -1,9 +1,11 @@
+// Transactions around analysis upserts plus queries for pending batch, similar games, and bulk loads for insights.
 use std::collections::HashMap;
 
 use rusqlite::{params, params_from_iter, Connection};
 
 use super::model::{GameAnalysisRow, KeyMomentRow, PatternTagRow};
 
+/// Analysis row plus denormalized tags and moments loaded for the game detail command (single round-trip shape).
 #[derive(Debug, Clone)]
 pub struct GameAnalysisStored {
     pub analysis: GameAnalysisRow,
@@ -12,6 +14,7 @@ pub struct GameAnalysisStored {
     pub moment_rows: Vec<KeyMomentRow>,
 }
 
+/// Writes analysis row then replaces tags and key moments so re-run clears stale pattern rows for the same game.
 pub fn upsert_analysis(
     conn: &Connection,
     analysis: &GameAnalysisRow,
@@ -100,6 +103,7 @@ pub fn upsert_analysis(
     tx.commit()
 }
 
+/// Patches only `system_connection_json` after a follow-up pass so we do not rewrite large eval blobs unnecessarily.
 pub fn update_system_connection_json(
     conn: &Connection,
     game_id: &str,
@@ -112,6 +116,7 @@ pub fn update_system_connection_json(
     )
 }
 
+/// Loads main analysis row plus tags and moments for one game id, or None if no analysis row exists yet.
 pub fn get_analysis_stored(conn: &Connection, game_id: &str) -> rusqlite::Result<Option<GameAnalysisStored>> {
     let analysis: Option<GameAnalysisRow> = {
         let mut stmt = conn.prepare(
@@ -225,6 +230,7 @@ pub fn count_pending_games(conn: &Connection, username: &str) -> rusqlite::Resul
     Ok(n)
 }
 
+/// Oldest-first ids for games missing analysis or not `done`, capped by `limit` for the background analysis worker.
 pub fn get_pending_game_ids(
     conn: &Connection,
     username: &str,
@@ -334,6 +340,7 @@ pub fn load_done_analyses_by_game_ids(
     conn: &Connection,
     game_ids: &[String],
 ) -> rusqlite::Result<HashMap<String, GameAnalysisRow>> {
+    // Avoid `IN ()` which is invalid SQL; callers often pass empty when no recent ids matched filters.
     if game_ids.is_empty() {
         return Ok(HashMap::new());
     }
@@ -389,6 +396,7 @@ pub fn load_key_moments_by_game_ids(
     conn: &Connection,
     game_ids: &[String],
 ) -> rusqlite::Result<Vec<KeyMomentRow>> {
+    // Same empty guard as bulk analysis load: keeps SQL valid and skips needless work in generators.
     if game_ids.is_empty() {
         return Ok(vec![]);
     }

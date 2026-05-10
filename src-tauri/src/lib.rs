@@ -1,9 +1,11 @@
+//! ChessAnalytics Tauri library: registers commands, opens SQLite on startup, and wires the desktop shell to Rust services.
 mod clients;
 mod commands;
 mod db;
 mod parsers;
 mod services;
 
+/// Builds the Tauri app with DB init in `setup` and all `commands::*` handlers exposed to the Vue frontend via `invoke`.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()

@@ -34,6 +34,7 @@ export function useMyGamesSection() {
       periods: filtersStore.periods,
       patternTag: filtersStore.patternTag,
       openingValue: filtersStore.openingValue,
+      playerColors: filtersStore.playerColors,
     });
     return filtered;
   });
@@ -50,7 +51,8 @@ export function useMyGamesSection() {
       filtersStore.speeds.length > 0 ||
       filtersStore.periods.length > 0 ||
       filtersStore.patternTag != null ||
-      filtersStore.openingValue != null;
+      filtersStore.openingValue != null ||
+      filtersStore.playerColors.length > 0;
     return hasSearch || hasChipFilters || filteredLen !== total;
   });
 

@@ -6,6 +6,8 @@
 </template>
 
 <script setup lang="ts">
+// Route-level page: composes features/widgets for this screen and wires page-local queries or navigation.
+
 import { AnalysisSettings } from '@/widgets/AnalysisSettings';
 import { AppearanceSettings } from '@/widgets/AppearanceSettings';
 </script>

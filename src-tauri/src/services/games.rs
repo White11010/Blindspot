@@ -1,3 +1,4 @@
+// Lichess games import and listing: fetches NDJSON, parses into rows, upserts in a transaction, updates sync cursors.
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tauri::AppHandle;
@@ -23,6 +24,7 @@ fn now_millis() -> i64 {
         .unwrap_or(0)
 }
 
+// Cursor must never move backward so incremental `since` does not re-fetch already-imported games after partial batches.
 fn combine_lichess_cursor(previous: Option<i64>, batch_max_created: Option<i64>) -> Option<i64> {
     match (previous, batch_max_created) {
         (None, None) => None,
@@ -32,6 +34,7 @@ fn combine_lichess_cursor(previous: Option<i64>, batch_max_created: Option<i64>)
     }
 }
 
+/// Pulls new games from Lichess since the stored cursor, upserts them, and advances `lichess_since_cursor_ms` + sync time.
 pub async fn sync_games(app: AppHandle) -> Result<SyncGamesResult, String> {
     let mut conn = get_conn(&app)?;
 
@@ -60,6 +63,7 @@ pub async fn sync_games(app: AppHandle) -> Result<SyncGamesResult, String> {
     })
 }
 
+/// Returns game list rows for the active user with joined analysis summary for the My Games UI (`limit` caps row count).
 pub fn get_my_games(
     app: AppHandle,
     limit: u32,
@@ -78,6 +82,7 @@ pub fn get_my_games(
     .map_err(|e| e.to_string())
 }
 
+// `inserted` counts rows touched by upsert with changes; rusqlite returns 0 when the row was identical (idempotent re-sync).
 fn persist_games_in_tx(
     tx: &rusqlite::Transaction<'_>,
     games: Vec<Game>,

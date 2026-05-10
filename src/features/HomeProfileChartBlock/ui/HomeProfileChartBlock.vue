@@ -106,6 +106,8 @@
 </template>
 
 <script setup lang="ts">
+// Feature slice: encapsulates one user flow or form; parent pages/widgets compose it and pass props/events.
+
 import type { ApexOptions } from 'apexcharts';
 import type { VueApexChartsComponentMethods } from 'vue3-apexcharts';
 

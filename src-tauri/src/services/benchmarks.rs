@@ -1,4 +1,4 @@
-//! Embedded rating benchmarks (`resources/benchmarks.json`).
+//! Static population pentagon benchmarks by rating bucket; Versus and profile chart compare the player to these norms.
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::OnceLock;
@@ -38,7 +38,7 @@ struct LookupRules {
 
 struct BenchmarksData {
     buckets: HashMap<String, BucketRaw>,
-    /// Sorted ascending by max_rating for lookup.
+    // Pre-sorted so `bucket_key_for_rating` scans once without sorting on every call (hot path for UI).
     rules: Vec<(i64, String)>,
 }
 
@@ -67,7 +67,7 @@ fn data() -> &'static BenchmarksData {
     })
 }
 
-/// First rule with `rating <= max` wins (`rules` sorted by `max`).
+/// Maps a rating to a benchmark bucket key using ascending `max_rating` rules from `benchmarks.json`.
 pub fn bucket_key_for_rating(rating: i64) -> String {
     let d = data();
     for (mx, bucket) in &d.rules {
@@ -81,6 +81,7 @@ pub fn bucket_key_for_rating(rating: i64) -> String {
         .unwrap_or_else(|| "under_800".to_string())
 }
 
+/// Returns the pentagon vertices and human label for a bucket key, or None if JSON data is missing that bucket.
 pub fn pentagon_and_label(bucket_key: &str) -> Option<(Pentagon, String)> {
     let d = data();
     d.buckets.get(bucket_key).map(|b| (b.pentagon.clone(), b.label.clone()))

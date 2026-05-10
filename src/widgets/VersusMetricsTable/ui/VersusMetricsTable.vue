@@ -70,6 +70,8 @@
 </template>
 
 <script setup lang="ts">
+// Composite widget: presents a focused dashboard block; reads shared Pinia stores and Tauri invoke where needed.
+
 import type { VersusSpeedSlice } from '@/entities/versus';
 import { buildVersusMetricTable } from '@/entities/versus/lib/versusMetrics';
 import { useI18n } from '@/shared/lib/i18n';

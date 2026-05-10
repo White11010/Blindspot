@@ -1,4 +1,4 @@
-//! Head-to-head style comparison: opponent games from API (no DB persist) vs local user stats.
+//! Versus screen: fetches opponent NDJSON, runs transient Stockfish on a capped subset, compares pentagons to local DB stats.
 use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -20,17 +20,18 @@ use crate::services::versus_metrics::{
 
 static VERSUS_CANCEL: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 
+/// Sets a flag checked between opponent analyses so long compares can abort without killing the whole app.
 pub fn cancel_versus_compare() {
     VERSUS_CANCEL.store(true, Ordering::SeqCst);
 }
 
-const LICHESS_FETCH_MAX: u32 = 500;
-const OPP_ANALYZE_MAX: usize = 100;
-const SELF_METRICS_LIMIT: u32 = 100;
-const SELF_OPENINGS_RECENT_LIMIT: u32 = 2000;
-const ANALYSIS_DEPTH: u8 = 8;
-const MIN_OPENING_GAMES_SHOW: i64 = 3;
-const MIN_OPENING_GAMES_GP: i64 = 6;
+const LICHESS_FETCH_MAX: u32 = 500; // Lichess export default cap: enough coverage without multi-page paging in v1.
+const OPP_ANALYZE_MAX: usize = 100; // Bounds Stockfish work per speed so Versus stays responsive on mid-tier hardware.
+const SELF_METRICS_LIMIT: u32 = 100; // Matches pentagon query elsewhere: ~100 recent games is stable for self slice.
+const SELF_OPENINGS_RECENT_LIMIT: u32 = 2000; // Wide window for opening aggregates so rare lines still get sample counts.
+const ANALYSIS_DEPTH: u8 = 8; // Shallow depth for transient opponent runs: rankable signal vs full game analysis cost.
+const MIN_OPENING_GAMES_SHOW: i64 = 3; // Hide ultra-noisy opening rows; fewer games than this yields misleading %.
+const MIN_OPENING_GAMES_GP: i64 = 6; // Game-plan suggestions need slightly more data than cards to avoid flip-flop advice.
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -407,6 +408,7 @@ fn prepare_versus_speed_slice(
 
     let opp_open_cards = map_agg_hash_to_cards(aggregate_openings(opp_games_speed, None), 4);
 
+    // Newest games first carry the opponent’s current rating context; older tail rarely changes the pentagon mean.
     let to_analyze: Vec<Game> = opp_games_speed
         .iter()
         .take(OPP_ANALYZE_MAX)
@@ -514,6 +516,7 @@ async fn versus_finish_speed_slice(
     })
 }
 
+/// Fetches up to 500 opponent games, builds bullet/blitz/rapid slices with self DB stats + transient opponent analysis.
 pub async fn versus_compare(
     app: AppHandle,
     opponent_username_raw: String,
@@ -614,6 +617,7 @@ pub async fn versus_compare(
     })
 }
 
+// Keeps first-analysis error JSON-friendly for SSE payloads without dumping huge engine stderr into the UI.
 fn truncate_diag_err(s: &str, max_chars: usize) -> String {
     let t = s.trim();
     if t.chars().count() <= max_chars {

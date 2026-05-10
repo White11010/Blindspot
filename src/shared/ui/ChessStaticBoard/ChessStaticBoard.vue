@@ -3,6 +3,8 @@
 </template>
 
 <script setup lang="ts">
+// Shared presentational component: minimal state, reused across pages for consistent visuals.
+
 import { nextTick, onMounted, ref, watch } from 'vue';
 import { Chessground } from 'chessground';
 

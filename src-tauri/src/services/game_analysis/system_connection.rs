@@ -1,3 +1,4 @@
+// Second-pass JSON blob: counts how often the primary pattern tag appears in recent games for contextual copy variants.
 use rusqlite::{params, Connection};
 
 use crate::db::game_analyses::repository as ga_repo;
@@ -5,13 +6,14 @@ use crate::db::game_analyses::repository as ga_repo;
 use super::model::SystemConnection;
 use super::pattern_detector::primary_tag;
 
+/// Computes similar-tag count in a `window`-game lookback plus optional win-rate note for i18n templates on the client.
 pub fn build_system_connection(
     conn: &Connection,
     username: &str,
     user_id: &str,
     tags: &[(String, i64)],
 ) -> Result<SystemConnection, String> {
-    let window: i32 = 10;
+    let window: i32 = 10; // Small window keeps COUNT fast and matches recent-habit wording without stale data.
     if tags.is_empty() {
         return Ok(SystemConnection {
             text: String::new(),

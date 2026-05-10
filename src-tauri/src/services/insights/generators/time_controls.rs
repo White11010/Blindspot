@@ -1,6 +1,7 @@
+// Time-of-day and calendar effects on results (local hour buckets) plus speed-mix win rates from `Game` metadata.
 use std::collections::HashMap;
 
-use chrono::{Local, TimeZone, Timelike};
+use chrono::{Local, NaiveDate, TimeZone, Timelike};
 use serde_json::json;
 
 use crate::db::games::model::Game;
@@ -57,6 +58,7 @@ fn acc_bucket(b: &mut SpeedStats, g: &Game) {
     }
 }
 
+/// Builds `CAT_TIME` insights when sample thresholds pass for hourly and per-speed aggregates.
 pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
     let mut map: HashMap<String, SpeedStats> = HashMap::new();
 
@@ -135,6 +137,7 @@ pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
 
     out.extend(rating_growth_30d(user_id, games));
     out.extend(morning_vs_evening(user_id, games));
+    out.extend(games_per_day_pattern(user_id, games));
 
     out
 }
@@ -248,6 +251,11 @@ fn morning_vs_evening(user_id: &str, games: &[Game]) -> Vec<Insight> {
     let pct_b = (wr_b * 100.0).round();
     let pct_w = (wr_w * 100.0).round();
 
+    let tz_offset_min = Local::now().offset().local_minus_utc() / 60;
+    let tz_hours = tz_offset_min / 60;
+    let tz_mins = (tz_offset_min % 60).abs();
+    let tz_sign = if tz_offset_min >= 0 { '+' } else { '-' };
+
     vec![build_insight(
         format!("time_dayparts_{user_id}"),
         user_id,
@@ -255,8 +263,10 @@ fn morning_vs_evening(user_id: &str, games: &[Game]) -> Vec<Insight> {
         CAT_TIME,
         "Время суток".to_string(),
         format!(
-            "{better}: {pct_b}% ({n_b} игр) vs {worse}: {pct_w}% ({n_w} игр), разница {:.0} п.п.",
-            gap.abs()
+            "{better}: {pct_b}% ({n_b} игр) vs {worse}: {pct_w}% ({n_w} игр), разница {:.0} п.п. (локальная таймзона устройства, UTC{tz_sign}{tz_h:02}:{tz_m:02}).",
+            gap.abs(),
+            tz_h = tz_hours.abs(),
+            tz_m = tz_mins,
         ),
         "info",
         70,
@@ -272,7 +282,95 @@ fn morning_vs_evening(user_id: &str, games: &[Game]) -> Vec<Insight> {
             "n_b": n_b,
             "pct_w": pct_w,
             "n_w": n_w,
-            "gap_pp": gap.abs().round()
+            "gap_pp": gap.abs().round(),
+            "timezone_offset_minutes": tz_offset_min,
+            "timezone_note": format!(
+                "UTC{}{:02}:{:02}",
+                if tz_offset_min >= 0 { "+" } else { "-" },
+                tz_hours.abs(),
+                tz_mins
+            )
+        }),
+    )]
+}
+
+/// Win rate on "light" days (1–4 games) vs "heavy" days (10+ games).
+fn games_per_day_pattern(user_id: &str, games: &[Game]) -> Vec<Insight> {
+    let mut by_day: HashMap<NaiveDate, SpeedStats> = HashMap::new();
+    for g in games {
+        let date = Local
+            .timestamp_millis_opt(g.created_at)
+            .single()
+            .map(|dt| dt.date_naive())
+            .unwrap_or_else(|| Local::now().date_naive());
+        let s = by_day.entry(date).or_default();
+        acc_bucket(s, g);
+    }
+
+    let mut light = SpeedStats::default();
+    let mut heavy = SpeedStats::default();
+    let mut light_days = 0i64;
+    let mut heavy_days = 0i64;
+
+    for (_, st) in by_day {
+        let n = st.games;
+        if (1..=4).contains(&n) {
+            light_days += 1;
+            light.games += st.games;
+            light.wins += st.wins;
+            light.losses += st.losses;
+            light.draws += st.draws;
+        } else if n >= 10 {
+            heavy_days += 1;
+            heavy.games += st.games;
+            heavy.wins += st.wins;
+            heavy.losses += st.losses;
+            heavy.draws += st.draws;
+        }
+    }
+
+    if light_days < 8 || heavy_days < 5 || light.games < 30 || heavy.games < 40 {
+        return vec![];
+    }
+
+    let wr_l = win_rate(&light);
+    let wr_h = win_rate(&heavy);
+    let gap = (wr_l - wr_h) * 100.0;
+    if gap < 5.0 {
+        return vec![];
+    }
+
+    let pct_l = (wr_l * 100.0).round();
+    let pct_h = (wr_h * 100.0).round();
+    let gap_r = gap.round();
+
+    vec![build_insight(
+        format!("time_vol_day_{user_id}"),
+        user_id,
+        "time_games_per_day_pattern",
+        CAT_TIME,
+        "Объём игры по дням".to_string(),
+        format!(
+            "В «лёгкие» дни (1–4 партии): винрейт {pct_l}% ({light_days} дней, {lg} игр). В дни с 10+ партиями: {pct_h}% ({heavy_days} дней, {hg} игр), разница {gap_r} п.п.",
+            lg = light.games,
+            hg = heavy.games,
+        ),
+        if gap_r > 12.0 { "warning" } else { "info" },
+        68,
+        Some("Винрейт (лёгкие дни)".to_string()),
+        Some(format!("{pct_l}%")),
+        Some(pct_l as f64),
+        Some("Сократи марафонские дни или делай паузы между сессиями.".to_string()),
+        "time:games_per_day",
+        58,
+        json!({
+            "wr_light_pct": pct_l,
+            "wr_heavy_pct": pct_h,
+            "light_days": light_days,
+            "heavy_days": heavy_days,
+            "light_games": light.games,
+            "heavy_games": heavy.games,
+            "gap_pp": gap_r
         }),
     )]
 }

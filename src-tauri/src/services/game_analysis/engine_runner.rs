@@ -1,3 +1,4 @@
+// Replays the game once, asking Stockfish at each half-move boundary to build a player-centric eval timeline.
 use shakmaty::fen::Fen;
 use shakmaty::{Chess, EnPassantMode, Position};
 
@@ -5,7 +6,7 @@ use crate::services::engine::stockfish::StockfishEngine;
 
 use super::move_token::play_token;
 
-/// Eval from the active player's perspective (positive = good for player).
+/// Converts engine side-to-move centipawns to good-for-tracked-player so white/black share one sign convention.
 pub fn to_player_cp(white_to_move: bool, cp_side_to_move: i32, player_is_white: bool) -> i32 {
     let good_for_white = if white_to_move {
         cp_side_to_move
@@ -19,7 +20,7 @@ pub fn to_player_cp(white_to_move: bool, cp_side_to_move: i32, player_is_white: 
     }
 }
 
-/// `eval_history[i]` = player-centric cp after `i` half-moves from start (i in 0..=moves.len()).
+/// Builds `eval_history.len() == moves.len()+1` by analyzing FEN before each ply then applying the recorded token.
 pub fn analyze_eval_history(
     engine: &mut StockfishEngine,
     uci_moves: &[String],

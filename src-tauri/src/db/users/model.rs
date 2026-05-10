@@ -1,3 +1,4 @@
+// Active-account row: ratings from Lichess API plus cursors the sync service updates after each import batch.
 use serde::{Deserialize, Serialize};
 
 use crate::clients::lichess::LichessProfile;
@@ -27,6 +28,7 @@ pub struct User {
 }
 
 impl User {
+    /// Maps `/api/account` JSON into our row shape; sync cursors start unset until the first successful games import.
     pub fn from_lichess(data: LichessProfile) -> Self {
         let perfs = data.perfs;
 

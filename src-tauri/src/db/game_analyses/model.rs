@@ -1,3 +1,4 @@
+// Row types mirroring persisted analysis JSON blobs and tag/moment satellite tables for the game detail API.
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

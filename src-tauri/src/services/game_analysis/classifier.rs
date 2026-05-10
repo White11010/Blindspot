@@ -1,3 +1,4 @@
+// Labels each player ply using eval swings (and optional best-move match) for accuracy, tags, and key moments.
 use shakmaty::fen::Fen;
 use shakmaty::{Chess, EnPassantMode};
 
@@ -24,6 +25,7 @@ fn is_player_move(half_move_index: usize, player_is_white: bool) -> bool {
     white_to_move == player_is_white
 }
 
+// Lichess-style buckets in centipawns from the player’s eval delta (negative = dropped eval on their move).
 fn classify_swing(swing: i32) -> &'static str {
     if swing <= -200 {
         "blunder"
@@ -44,6 +46,7 @@ fn position_at_prefix(uci_moves: &[String], up_to: usize) -> Result<Chess, Strin
     Ok(pos)
 }
 
+/// Full classification with per-move Stockfish bestmove at the position (enables brilliant and best-move compare).
 pub fn classify_player_moves(
     engine: &mut StockfishEngine,
     uci_moves: &[String],
@@ -104,8 +107,7 @@ pub fn classify_player_moves(
     Ok(out)
 }
 
-/// Same player-move swings as [`classify_player_moves`], but without per-move Stockfish lookups
-/// (no best-move / brilliant detection). Intended for Versus-style batch scans.
+/// Like `classify_player_moves` but uses only eval deltas; skips N extra engine calls for Versus transient analysis speed.
 pub fn classify_player_moves_from_eval(
     uci_moves: &[String],
     eval_history: &[i32],
@@ -143,6 +145,7 @@ pub fn classify_player_moves_from_eval(
     Ok(out)
 }
 
+/// Tallies blunders / mistakes / inaccuracies from swing buckets for the summary header and DB counters.
 pub fn count_move_kinds(classified: &[ClassifiedMove]) -> (i32, i32, i32) {
     let mut b = 0;
     let mut m = 0;
@@ -158,6 +161,7 @@ pub fn count_move_kinds(classified: &[ClassifiedMove]) -> (i32, i32, i32) {
     (b, m, i)
 }
 
+/// Mean of negative swing magnitudes on player moves only (positive swings ignored); basis for Lichess-style ACPL.
 pub fn avg_centipawn_loss(classified: &[ClassifiedMove]) -> f64 {
     if classified.is_empty() {
         return 0.0;
@@ -169,7 +173,7 @@ pub fn avg_centipawn_loss(classified: &[ClassifiedMove]) -> f64 {
     sum / classified.len() as f64
 }
 
-/// Lichess-style accuracy from average centipawn loss (player moves only).
+/// Maps ACPL to 0–100 accuracy using the same exponential form as common chess sites (player moves only).
 pub fn accuracy_from_acpl(acpl: f64) -> f64 {
     if acpl <= 0.0 {
         return 100.0;
@@ -178,6 +182,7 @@ pub fn accuracy_from_acpl(acpl: f64) -> f64 {
     a.clamp(0.0, 100.0)
 }
 
+/// Peak and trough player-centric eval across the whole game; feeds lost-winning-position style pattern tags.
 pub fn max_min_eval(eval_history: &[i32]) -> (i32, i32) {
     if eval_history.is_empty() {
         return (0, 0);

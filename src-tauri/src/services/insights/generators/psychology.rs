@@ -1,5 +1,10 @@
+// Soft psychology-style patterns: streaks, rest gaps, tilt proxies from game order plus optional analysis rows.
+use std::collections::HashMap;
+
+use chrono::{Local, TimeZone};
 use serde_json::json;
 
+use crate::db::game_analyses::model::GameAnalysisRow;
 use crate::db::games::model::Game;
 use crate::db::insights::model::Insight;
 use crate::services::insights::insight_common::{build_insight, CAT_PSYCHOLOGY};
@@ -19,8 +24,107 @@ fn sorted_chrono(games: &[Game]) -> Vec<&Game> {
     v
 }
 
-/// Win rate in the 3rd and 4th game after two consecutive losses (indices i+2, i+3 after losses at i-2, i-1).
-pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
+fn mean(xs: &[f64]) -> f64 {
+    if xs.is_empty() {
+        return 0.0;
+    }
+    xs.iter().sum::<f64>() / xs.len() as f64
+}
+
+fn rest_effect_insight(
+    user_id: &str,
+    games: &[Game],
+    analyses: &HashMap<String, GameAnalysisRow>,
+) -> Option<Insight> {
+    let mut by_day: HashMap<chrono::NaiveDate, Vec<&Game>> = HashMap::new();
+    for g in games {
+        let date = Local
+            .timestamp_millis_opt(g.created_at)
+            .single()
+            .map(|dt| dt.date_naive())
+            .unwrap_or_else(|| Local::now().date_naive());
+        by_day.entry(date).or_default().push(g);
+    }
+    for list in by_day.values_mut() {
+        list.sort_by_key(|g| g.created_at);
+    }
+
+    let mut first_acc: Vec<f64> = Vec::new();
+    let mut late_acc: Vec<f64> = Vec::new();
+
+    for list in by_day.values() {
+        if list.len() < 5 {
+            continue;
+        }
+        let g0 = list[0];
+        if let Some(a) = analyses.get(&g0.id) {
+            if a.status == "done" {
+                if let Some(acc) = a.accuracy {
+                    first_acc.push(acc);
+                }
+            }
+        }
+        for g in list.iter().skip(4) {
+            if let Some(a) = analyses.get(&g.id) {
+                if a.status == "done" {
+                    if let Some(acc) = a.accuracy {
+                        late_acc.push(acc);
+                    }
+                }
+            }
+        }
+    }
+
+    if first_acc.len() < 15 || late_acc.len() < 20 {
+        return None;
+    }
+
+    let m1 = mean(&first_acc);
+    let m2 = mean(&late_acc);
+    if m2 + 4.0 >= m1 {
+        return None;
+    }
+
+    let d = m1 - m2;
+    let d_r = d.round() as i64;
+    let m1_r = m1.round() as i64;
+    let m2_r = m2.round() as i64;
+
+    Some(build_insight(
+        format!("psych_rest_{user_id}"),
+        user_id,
+        "psychology_rest_effect",
+        CAT_PSYCHOLOGY,
+        "Эффект усталости в сессии".to_string(),
+        format!(
+            "Средняя точность по анализу: первая партия дня {m1_r}% ({n1} партий), с 5-й и далее в тот же день {m2_r}% ({n2} точек). Разница {d_r} п.п.",
+            n1 = first_acc.len(),
+            n2 = late_acc.len(),
+        ),
+        "warning",
+        70,
+        Some("Просадка точности, п.п.".to_string()),
+        Some(format!("{d_r}")),
+        Some(d_r as f64),
+        Some("Остановись после нескольких партий или сделай длинный перерыв.".to_string()),
+        "psychology:rest_effect",
+        83,
+        json!({
+            "mean_first_pct": m1_r,
+            "mean_fifth_plus_pct": m2_r,
+            "n_first_samples": first_acc.len(),
+            "n_late_samples": late_acc.len(),
+            "drop_pp": d_r
+        }),
+    ))
+}
+
+/// Returns `CAT_PSYCHOLOGY` cards when longitudinal signals in `games` (+ optional `analyses`) clear minimum counts.
+pub fn generate(
+    user_id: &str,
+    games: &[Game],
+    analyses: &HashMap<String, GameAnalysisRow>,
+) -> Vec<Insight> {
     if games.len() < 20 {
         return vec![];
     }
@@ -36,8 +140,6 @@ pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
             continue;
         }
         if is_loss(ch[i - 2]) && is_loss(ch[i - 1]) {
-            // 3rd and 4th game after the second loss: positions i+2 and i+3 in 0-based chrono list
-            // After L at i-2, L at i-1: game i = 1st after, i+1 = 2nd, i+2 = 3rd, i+3 = 4th
             for j in [i + 2, i + 3] {
                 if j < ch.len() {
                     tilt_n += 1;
@@ -48,7 +150,7 @@ pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
             }
         }
     }
-    if tilt_n >= 8 {
+    if tilt_n >= 5 {
         let wr = tilt_wins as f64 / tilt_n as f64;
         let pct = (wr * 100.0).round();
         out.push(build_insight(
@@ -105,50 +207,8 @@ pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
         ));
     }
 
-    // Streak (newest first)
-    let mut newest: Vec<&Game> = games.iter().collect();
-    newest.sort_by_key(|g| std::cmp::Reverse(g.created_at));
-    if let Some(first) = newest.first() {
-        let streak_win = is_win(first);
-        let mut len: i64 = 0;
-        for g in &newest {
-            let ok = if streak_win { is_win(g) } else { is_loss(g) };
-            if ok {
-                len += 1;
-            } else {
-                break;
-            }
-        }
-        if len >= 2 {
-            let label = if streak_win { "побед" } else { "поражений" };
-            let title = if streak_win {
-                "Серия побед"
-            } else {
-                "Серия поражений"
-            };
-            let sev = if streak_win { "good" } else { "warning" };
-            out.push(build_insight(
-                format!("psych_streak_{user_id}"),
-                user_id,
-                "psychology_streak",
-                CAT_PSYCHOLOGY,
-                title.to_string(),
-                format!("Текущая серия: {len} {label} подряд."),
-                sev,
-                80,
-                Some("Длина серии".to_string()),
-                Some(format!("{len}")),
-                Some(len as f64),
-                Some(if streak_win {
-                    "Постарайся не переоценивать силу — держи дисциплину.".to_string()
-                } else {
-                    "Сделай перерыв или разбери последние партии.".to_string()
-                }),
-                "streak:current",
-                92,
-                json!({ "len": len, "streak_win": streak_win }),
-            ));
-        }
+    if let Some(ins) = rest_effect_insight(user_id, games, analyses) {
+        out.push(ins);
     }
 
     out

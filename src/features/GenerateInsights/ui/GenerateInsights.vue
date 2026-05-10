@@ -3,6 +3,8 @@
 </template>
 
 <script setup lang="ts">
+// Feature slice: encapsulates one user flow or form; parent pages/widgets compose it and pass props/events.
+
 import { useQueryClient } from '@tanstack/vue-query';
 
 import { useInsightsStore } from '@/entities/insight';

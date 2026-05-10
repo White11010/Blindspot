@@ -1,9 +1,9 @@
-//! Shared pentagon-style aggregates (home profile + Versus).
+//! Pentagon DTO and math shared by profile chart and Versus: cohort-relative stability vs benchmark spread.
 use serde::Serialize;
 
 use crate::services::benchmarks::Pentagon as BenchPentagon;
 
-pub const MIN_PENTAGON_SAMPLE: usize = 5;
+pub const MIN_PENTAGON_SAMPLE: usize = 5; // Below this, variance collapses the polygon; UI shows null instead of noise.
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -85,6 +85,7 @@ pub fn pentagon_from_metrics(games: &[MetricGameRow], benchmark: &PentagonDto) -
     let sigma_pop = ((100.0 - benchmark.stability).max(0.0) / 4.0).max(1e-3);
     let stability = (benchmark.stability * sigma_pop / sigma_player.max(sigma_eps)).clamp(0.0, 100.0);
 
+    // Conversion only counts positions where the player reached +200cp; otherwise won-won games look inflated.
     let eligible: Vec<&MetricGameRow> = games
         .iter()
         .filter(|g| g.max_adv.map(|m| m >= 200).unwrap_or(false))

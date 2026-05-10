@@ -1,3 +1,4 @@
+// App shell bootstrap: maps `bootstrap` invoke to user + games-sync hydration and Vue Query invalidation.
 import { invoke } from '@tauri-apps/api/core';
 import { defineStore } from 'pinia';
 
@@ -11,6 +12,7 @@ type BootstrapState =
   | { state: 'Authorized'; data: { user: User; is_stale: boolean } };
 
 export const useAppStore = defineStore('app', {
+  // Read by router/layout after startup; `bootstrap` action writes readiness and stale-user hint from Tauri.
   state: () => ({
     status: 'loading' as 'loading' | 'ready',
     isStale: false,

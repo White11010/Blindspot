@@ -1,9 +1,11 @@
+// Insert/update and read paths for `games`, including joins to analyses for list and versus aggregates.
 use rusqlite::{params, Connection};
 
 use crate::services::versus_metrics::MetricGameRow;
 
 use super::model::{Game, GameListItem};
 
+/// Inserts a new game or refreshes mutable fields on conflict so re-sync can update PGN and result without duplicate ids.
 pub fn upsert_game(conn: &Connection, game: &Game) -> rusqlite::Result<usize> {
     conn.execute(
         "
@@ -107,6 +109,7 @@ pub fn upsert_game(conn: &Connection, game: &Game) -> rusqlite::Result<usize> {
     )
 }
 
+/// Returns up to `limit` games for `username` newest-first; used when full analysis join is not needed.
 pub fn get_games_by_username(
     conn: &Connection,
     username: &str,
@@ -212,6 +215,7 @@ pub fn get_games_by_username(
     Ok(items)
 }
 
+// Tags are stored comma-separated in SQL for list fetch; split here so the API returns a clean `Vec<String>`.
 fn parse_pattern_tags_csv(raw: Option<String>) -> Vec<String> {
     match raw {
         None => Vec::new(),
@@ -220,6 +224,7 @@ fn parse_pattern_tags_csv(raw: Option<String>) -> Vec<String> {
     }
 }
 
+/// My Games list: joins latest completed analysis and pattern tags for `user_id` so the UI shows accuracy and badges.
 pub fn get_game_list_items(
     conn: &Connection,
     username: &str,
@@ -320,10 +325,12 @@ pub fn get_game_list_items(
     Ok(items)
 }
 
+/// Wipes all rows for a username (e.g. account switch); callers must handle related analyses if needed.
 pub fn delete_games_by_username(conn: &Connection, username: &str) -> rusqlite::Result<usize> {
     conn.execute("DELETE FROM games WHERE username = ?1", [username])
 }
 
+/// Single game by primary key for detail and analysis flows.
 pub fn get_game_by_id(conn: &Connection, id: &str) -> rusqlite::Result<Option<Game>> {
     let mut stmt = conn.prepare(
         "
@@ -400,7 +407,7 @@ pub fn get_game_by_id(conn: &Connection, id: &str) -> rusqlite::Result<Option<Ga
     }
 }
 
-/// Last `limit` Lichess rated games at `speed` with completed analysis rows (Versus «you» pentagon slice).
+/// Versus self metrics: last `limit` rated Lichess games at `speed` with `done` analysis (pentagon / accuracy slice).
 pub fn versus_self_analyzed_metrics(
     conn: &Connection,
     username: &str,
@@ -459,6 +466,7 @@ pub fn versus_self_analyzed_metrics(
     Ok(out)
 }
 
+// Row for opening win/loss/draw breakdown in a recent window (versus opening comparison).
 #[derive(Debug, Clone)]
 pub struct OpeningAggregateRow {
     pub opening_name: String,
@@ -468,7 +476,7 @@ pub struct OpeningAggregateRow {
     pub total: i64,
 }
 
-/// Aggregate opening results over the latest `recent_limit` games (before GROUP BY).
+/// Versus openings: aggregates wins/losses/draws per opening name over the newest `recent_limit` rated games at `speed`.
 pub fn versus_opening_stats_recent(
     conn: &Connection,
     username: &str,

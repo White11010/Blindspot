@@ -1,5 +1,7 @@
+// DDL for `insights` (one row per card) with indexes for list ordering by user, kind, category, and priority.
 use rusqlite::Connection;
 
+/// Creates `insights` and indexes used when listing and sorting cards for the Insights UI.
 pub fn init_insights_table(conn: &Connection) {
     conn.execute_batch(
         "

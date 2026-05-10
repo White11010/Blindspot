@@ -1,7 +1,9 @@
+// CRUD for `users`: upsert profile, single active user flag, and games-sync cursor fields after Lichess import.
 use rusqlite::{params, Connection, OptionalExtension};
 
 use super::model::User;
 
+/// Inserts or updates profile ratings by `id`; does not touch sync metadata columns (updated elsewhere).
 pub fn upsert_user(conn: &Connection, user: &User) -> Result<(), String> {
     conn.execute(
         "
@@ -61,6 +63,7 @@ pub fn upsert_user(conn: &Connection, user: &User) -> Result<(), String> {
     Ok(())
 }
 
+/// Clears `is_active` then marks one user active so the app has a single logged-in account for sync and UI.
 pub fn set_active_user(conn: &Connection, user_id: &str) -> Result<(), String> {
     conn.execute("UPDATE users SET is_active = 0", [])
         .map_err(|e| e.to_string())?;
@@ -74,6 +77,7 @@ pub fn set_active_user(conn: &Connection, user_id: &str) -> Result<(), String> {
     Ok(())
 }
 
+/// Returns the row with `is_active = 1`, or None before the user connects an account.
 pub fn get_active_user(conn: &Connection) -> Result<Option<User>, String> {
     conn.query_row(
         "
@@ -128,6 +132,7 @@ pub fn get_active_user(conn: &Connection) -> Result<Option<User>, String> {
     .map_err(|e| e.to_string())
 }
 
+/// Persists Lichess `since` cursor and last successful sync time after `sync_games` completes for incremental pulls.
 pub fn update_user_games_sync_metadata(
     conn: &Connection,
     user_id: &str,

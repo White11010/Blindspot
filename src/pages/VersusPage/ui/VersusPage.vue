@@ -24,6 +24,8 @@
 </template>
 
 <script setup lang="ts">
+// Route-level page: composes features/widgets for this screen and wires page-local queries or navigation.
+
 import { VersusCompareForm } from '@/features/VersusCompareForm';
 import { VersusSpeedFilter } from '@/features/VersusSpeedFilter';
 import { useVersusStore } from '@/entities/versus';

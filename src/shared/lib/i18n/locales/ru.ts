@@ -39,6 +39,7 @@ export default {
       result: 'Результат',
       timeControl: 'Контроль времени',
       period: 'Период',
+      pieceColor: 'Цвет фигур',
       pattern: 'Паттерн',
       opening: 'Дебют',
       resetFilters: 'Сбросить фильтры',
@@ -58,6 +59,10 @@ export default {
         d30: '30 дней',
         d90: '90 дней',
         all: 'Всё время',
+      },
+      colors: {
+        white: 'Белые',
+        black: 'Чёрные',
       },
     },
     table: {
@@ -88,6 +93,7 @@ export default {
       multiple_blunders: 'Несколько зевков',
       slow_drift: 'Плавное ухудшение (без зевков, высокий ACPL)',
       low_accuracy: 'Низкая точность',
+      late_game_loss: 'Поражение в длинной партии (≥40 ходов)',
     },
   },
   ...shellRest,

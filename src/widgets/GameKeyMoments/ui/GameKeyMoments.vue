@@ -31,6 +31,8 @@
 </template>
 
 <script setup lang="ts">
+// Composite widget: presents a focused dashboard block; reads shared Pinia stores and Tauri invoke where needed.
+
 import { getKeyMomentDescription, getKeyMomentHeadline } from '@/entities/game-analysis';
 import type { GameAnalysis, KeyMoment } from '@/entities/game-analysis';
 import { useI18n } from '@/shared/lib/i18n';

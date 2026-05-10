@@ -69,6 +69,8 @@
 </template>
 
 <script setup lang="ts">
+// Composite widget: presents a focused dashboard block; reads shared Pinia stores and Tauri invoke where needed.
+
 import type { VersusSpeedSlice } from '@/entities/versus';
 import { pentagonAxisNumber } from '@/entities/versus/lib/versusConclusions';
 import { useVersusPentagonChart } from '@/entities/versus/lib/useVersusPentagonChart';

@@ -1,9 +1,11 @@
+// Picks a single headline insight from pattern tags and worst swing when persisting analysis for the game hero card.
 use crate::db::games::model::Game;
 
 use super::classifier::ClassifiedMove;
 use super::model::KeyInsight;
 use super::pattern_detector::PatternTag;
 
+/// Priority-ordered narrative: decisive tags first, else worst blunder swing, else generic neutral copy.
 pub fn build_key_insight(
     game: &Game,
     tags: &[PatternTag],

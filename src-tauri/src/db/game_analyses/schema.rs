@@ -1,5 +1,7 @@
+// DDL for `game_analyses`, `game_pattern_tags`, and `game_key_moments` (normalized tags/moments for queries).
 use rusqlite::Connection;
 
+/// Creates analysis main table plus tag and key-moment tables with indexes for pending jobs and similarity search.
 pub fn init_game_analyses_tables(conn: &Connection) {
     conn.execute_batch(
         "

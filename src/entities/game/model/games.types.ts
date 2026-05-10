@@ -46,3 +46,5 @@ export interface Game {
 }
 
 export type MyGamesPeriod = '7' | '30' | '90' | 'all';
+
+export type MyGamesPlayerColor = 'white' | 'black';

@@ -29,6 +29,8 @@
   </v-container>
 </template>
 <script setup lang="ts">
+// Composite widget: presents a focused dashboard block; reads shared Pinia stores and Tauri invoke where needed.
+
 import { HomeGreetingBlock } from '@/features/HomeGreetingBlock';
 import { HomeLastGame } from '@/features/HomeLastGame';
 import { HomeProfileChartBlock } from '@/features/HomeProfileChartBlock';

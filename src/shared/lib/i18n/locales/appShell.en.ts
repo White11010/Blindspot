@@ -27,6 +27,8 @@ export const appShellEn = {
   home: {
     greetingTitle: 'Welcome',
     greetingConnected: 'Connected: Lichess {username}',
+    currentStreakWins: 'Current streak: {n} wins in a row',
+    currentStreakLosses: 'Current streak: {n} losses in a row',
     greetTitle: 'Welcome, {username}!',
     connectTitle: 'Connect your chess account',
     connectSubtitle: 'Import your games from Lichess to start exploring',
@@ -139,6 +141,7 @@ export const appShellEn = {
     filterTime: 'Time',
     filterTactics: 'Tactics',
     filterPsychology: 'Psychology',
+    filterAttention: 'Needs attention',
     categoriesLabel: 'Categories',
     sortByPriority: 'By priority',
     sortPriorityHighFirst: 'Highest priority first',
@@ -221,6 +224,11 @@ export const appShellEn = {
       gamesInRow: 'Games in a row',
       failedToWinPct: 'Did not win, %',
       streakLength: 'Streak length',
+      trendDeltaPp: 'Win rate change (p.p.)',
+      weakestPhaseAccuracy: 'Accuracy (weakest phase)',
+      accuracyDropPp: 'Accuracy drop (p.p.)',
+      winrateVsStronger: 'Win rate vs stronger',
+      winrateLightDays: 'Win rate (light days)',
     },
     slots: {
       morning: 'Morning (6–12, local time)',
@@ -240,13 +248,35 @@ export const appShellEn = {
       },
       opening_rare_gem: {
         title: 'Rare gem',
-        summary: '{opening} — {pct}% over only {n} games (small sample, strong signal).',
+        summary:
+          '{opening} — {pct}% over only {n} games. Small sample — treat as a hint, not proof.',
         recommendation: 'Play more games in this line to confirm.',
       },
       opening_dependency: {
-        title: 'Opening dependency',
-        summary: '{opening} — {share_pct}% of all tagged games ({n} games), win rate {wr_pct}%.',
-        recommendation: 'Broaden your repertoire to stay less predictable.',
+        titleNeutral: 'Opening dependency',
+        titleStrength: 'Trusted main line',
+        titleRisk: 'Risky dependency',
+        summaryNeutral:
+          '{opening} — {share_pct}% of all tagged games ({n} games), win rate {wr_pct}% (overall {overall_pct}%).',
+        summaryStrength:
+          '{opening} takes {share_pct}% of tagged games ({n}); win rate {wr_pct}% beats your overall {overall_pct}% — a strength.',
+        summaryRisk:
+          '{opening} takes {share_pct}% of tagged games ({n}); win rate {wr_pct}% lags your overall {overall_pct}% — risky concentration.',
+        recommendationNeutral: 'Broaden your repertoire to stay less predictable.',
+        recommendationStrength: 'Keep polishing this system, but keep a second weapon ready.',
+        recommendationRisk: 'Expand the repertoire and review typical errors in this line.',
+      },
+      opening_color_split: {
+        title: 'Opening by color',
+        summary:
+          '{opening}: {stronger_wr_pct}% as {stronger_side} ({n_stronger} games) vs {weaker_wr_pct}% as {weaker_side} ({n_weaker} games), gap {gap_pp} p.p.',
+        recommendation: 'Split prep by color — structures differ.',
+      },
+      opening_trend: {
+        title: 'Opening trend (30 days)',
+        summary:
+          '{opening}: win rate {wr_prev_pct}% → {wr_recent_pct}% (previous 30 days: {n_prev} games, last 30 days: {n_recent} games).',
+        recommendation: 'Double down on what changed, or review if it dropped.',
       },
       time_control_best: {
         title: 'Strong time control',
@@ -266,10 +296,17 @@ export const appShellEn = {
       time_morning_vs_evening: {
         title: 'Time of day',
         summaryMorningBetter:
-          '{better}: {pct_b}% ({n_b} games) vs {worse}: {pct_w}% ({n_w} games), gap {gap_pp} p.p.',
+          '{better}: {pct_b}% ({n_b} games) vs {worse}: {pct_w}% ({n_w} games), gap {gap_pp} p.p. {timezone_caption}',
         summaryEveningBetter:
-          '{better}: {pct_b}% ({n_b} games) vs {worse}: {pct_w}% ({n_w} games), gap {gap_pp} p.p.',
+          '{better}: {pct_b}% ({n_b} games) vs {worse}: {pct_w}% ({n_w} games), gap {gap_pp} p.p. {timezone_caption}',
+        timezoneCaption: '(Clock: device local, {tz})',
         recommendation: 'Plan sessions around fatigue and focus.',
+      },
+      time_games_per_day_pattern: {
+        title: 'Games per day',
+        summary:
+          'Light days (1–4 games): {wr_light_pct}% win rate ({light_days} days, {light_games} games). Heavy days (10+ games): {wr_heavy_pct}% ({heavy_days} days, {heavy_games} games), gap {gap_pp} p.p.',
+        recommendation: 'Avoid marathon days or insert longer breaks between sessions.',
       },
       tactics_late_game_losses: {
         title: 'Late-game losses',
@@ -290,16 +327,19 @@ export const appShellEn = {
           'Key-moment errors: middlegame (≤50 half-moves) {mg_err}, endgame (>50) {eg_err} of {total_err} across {n_games} analyzed games. Endgame share: {eg_share}%.',
         recommendation: 'Add endgame puzzles if the late phase drags you down.',
       },
-      tactics_blunder_streak: {
-        title: 'No-blunder streak',
-        summary: 'Longest streak of analyzed games without a blunder: {best}.',
-        recommendation: 'Decision quality in those games was high.',
-      },
       tactics_conversion_advantage: {
         title: 'Converting advantages',
         summary:
           'In {with_adv} games you reached ≥+2.0, but {failed} did not end in a win ({rate}%).',
+        summaryWithSpeeds:
+          'In {with_adv} games you reached ≥+2.0, but {failed} did not end in a win ({rate}%). {speed_split}',
         recommendation: 'Practice technique and time management when ahead.',
+      },
+      tactics_accuracy_by_phase: {
+        title: 'Accuracy by phase',
+        summary:
+          'Across {n_games} analyzed games: opening (≤20 half-moves) {opening_pct}%, middlegame (21–60) {middlegame_pct}%, endgame (61+) {endgame_pct}%.',
+        recommendation: 'Train the phase with the lowest accuracy first.',
       },
       psychology_tilt: {
         title: 'Tilt detector',
@@ -311,12 +351,17 @@ export const appShellEn = {
         summary: 'Win rate in the game right after a loss: {pct}% ({wins_after_loss}/{trials_after_loss}).',
         recommendation: 'Compare with your baseline to see how you recover.',
       },
-      psychology_streak: {
-        titleWins: 'Win streak',
-        titleLosses: 'Loss streak',
-        summary: 'Current streak: {len} in a row.',
-        recommendationWins: 'Stay disciplined — do not overestimate form.',
-        recommendationLosses: 'Take a break or review recent games.',
+      psychology_rest_effect: {
+        title: 'Session fatigue',
+        summary:
+          'Mean analysis accuracy: first game of the day {mean_first_pct}% ({n_first_samples} samples) vs 5th+ that day {mean_fifth_plus_pct}% ({n_late_samples} samples), drop {drop_pp} p.p.',
+        recommendation: 'Stop after a few games or take a long break before continuing.',
+      },
+      opponent_rating_performance: {
+        title: 'Performance by opponent strength',
+        summary:
+          'Win rate vs weaker (−50 and below): {wr_weaker_pct}% ({n_weaker} games), even (±50): {wr_equal_pct}% ({n_equal} games), stronger (+50): {wr_stronger_pct}% ({n_stronger} games). Gap even vs stronger: {gap_equal_vs_stronger_pp} p.p.',
+        recommendation: 'Play slightly stronger opponents and review those games.',
       },
     },
   },

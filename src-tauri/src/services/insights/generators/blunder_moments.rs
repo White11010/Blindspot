@@ -1,17 +1,31 @@
+// Late-game loss rate vs game length using eval history length as a ply proxy when moves string is sparse.
+use std::collections::HashMap;
+
 use serde_json::json;
 
+use crate::db::game_analyses::model::GameAnalysisRow;
 use crate::db::games::model::Game;
 use crate::db::insights::model::Insight;
+use crate::parsers::move_count::total_halfmoves;
 use crate::services::insights::insight_common::{build_insight, CAT_TACTICS};
 
-pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
+fn eval_history_len(a: &GameAnalysisRow) -> Option<usize> {
+    a.eval_history_json.as_ref().and_then(|j| serde_json::from_str::<Vec<i32>>(j).ok().map(|v| v.len()))
+}
+
+/// Flags recurring losses in long games (`CAT_TACTICS`) when `late_game_loss` pattern density is high enough.
+pub fn generate(
+    user_id: &str,
+    games: &[Game],
+    analyses: &HashMap<String, GameAnalysisRow>,
+) -> Vec<Insight> {
     let mut late_game_losses = 0i64;
     let mut total_games = 0i64;
 
     for game in games {
         total_games += 1;
 
-        if is_late_game_loss(game) {
+        if is_late_game_loss(game, analyses.get(&game.id)) {
             late_game_losses += 1;
         }
     }
@@ -48,17 +62,16 @@ pub fn generate(user_id: &str, games: &[Game]) -> Vec<Insight> {
     )]
 }
 
-fn is_late_game_loss(game: &Game) -> bool {
-    let moves_count = game
-        .moves
-        .as_deref()
-        .unwrap_or("")
-        .split_whitespace()
-        .count();
-
+fn is_late_game_loss(game: &Game, analysis: Option<&GameAnalysisRow>) -> bool {
     let lost = game.player_result == "loss";
-
-    moves_count >= 40 && lost
+    if !lost {
+        return false;
+    }
+    let eval_len = analysis
+        .filter(|a| a.status == "done")
+        .and_then(eval_history_len);
+    let hm = total_halfmoves(game.moves.as_deref(), eval_len);
+    hm >= 40
 }
 
 fn confidence(games: i64) -> i64 {

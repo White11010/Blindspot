@@ -7,6 +7,8 @@
 </template>
 
 <script setup lang="ts">
+// Composite widget: presents a focused dashboard block; reads shared Pinia stores and Tauri invoke where needed.
+
 import { MyGamesSection } from '@/features/MyGamesSection';
 import { MyGamesSync } from '@/features/MyGamesSync';
 import { NoGamesFound } from '@/features/NoGamesFound';

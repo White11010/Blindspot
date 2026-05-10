@@ -27,6 +27,8 @@ export const appShellRu = {
   home: {
     greetingTitle: 'Добро пожаловать',
     greetingConnected: 'Подключено: Lichess {username}',
+    currentStreakWins: 'Текущая серия: {n} побед подряд',
+    currentStreakLosses: 'Текущая серия: {n} поражений подряд',
     greetTitle: 'Добро пожаловать, {username}!',
     connectTitle: 'Подключите аккаунт',
     connectSubtitle: 'Импортируйте партии с Lichess, чтобы начать анализ',
@@ -140,6 +142,7 @@ export const appShellRu = {
     filterTime: 'Время',
     filterTactics: 'Тактика',
     filterPsychology: 'Психология',
+    filterAttention: 'Требуют внимания',
     categoriesLabel: 'Категории',
     sortByPriority: 'По приоритету',
     sortPriorityHighFirst: 'Сначала важные',
@@ -222,6 +225,11 @@ export const appShellRu = {
       gamesInRow: 'Партий подряд',
       failedToWinPct: 'Не победили, %',
       streakLength: 'Длина серии',
+      trendDeltaPp: 'Изменение винрейта, п.п.',
+      weakestPhaseAccuracy: 'Точность (слабая фаза)',
+      accuracyDropPp: 'Просадка точности, п.п.',
+      winrateVsStronger: 'Винрейт против сильнее',
+      winrateLightDays: 'Винрейт в «лёгкие» дни',
     },
     slots: {
       morning: 'Утро (6–12, локальное время)',
@@ -240,13 +248,35 @@ export const appShellRu = {
       },
       opening_rare_gem: {
         title: 'Редкий дебют-находка',
-        summary: '{opening} — {pct}% за всего {n} партий (мало данных, но сигнал сильный).',
+        summary:
+          '{opening} — {pct}% за всего {n} партий. Малая выборка — воспринимайте как намёк, не как доказательство.',
         recommendation: 'Сыграйте ещё партии в этом дебюте для подтверждения.',
       },
       opening_dependency: {
-        title: 'Дебютная зависимость',
-        summary: '{opening} — {share_pct}% всех партий с дебютом ({n} игр), винрейт {wr_pct}%.',
-        recommendation: 'Расширьте репертуар, чтобы быть менее предсказуемым.',
+        titleNeutral: 'Дебютная зависимость',
+        titleStrength: 'Сильная опора в дебюте',
+        titleRisk: 'Опасная зависимость',
+        summaryNeutral:
+          '{opening} — {share_pct}% всех партий с дебютом ({n} игр), винрейт {wr_pct}% (база по всем дебютам {overall_pct}%).',
+        summaryStrength:
+          '{opening} — {share_pct}% партий с дебютом ({n}); винрейт {wr_pct}% выше вашей базы {overall_pct}% — это козырь.',
+        summaryRisk:
+          '{opening} — {share_pct}% партий с дебютом ({n}); винрейт {wr_pct}% ниже базы {overall_pct}% — рискованная концентрация.',
+        recommendationNeutral: 'Расширьте репертуар, чтобы быть менее предсказуемым.',
+        recommendationStrength: 'Продолжайте шлифовать систему, но держите запасной план.',
+        recommendationRisk: 'Расширьте репертуар и разберите типовые ошибки в этой линии.',
+      },
+      opening_color_split: {
+        title: 'Дебют по цвету',
+        summary:
+          '{opening}: {stronger_wr_pct}% за {stronger_side} ({n_stronger} партий) против {weaker_wr_pct}% за {weaker_side} ({n_weaker} партий), разница {gap_pp} п.п.',
+        recommendation: 'Разведите подготовку по цветам — структуры различаются.',
+      },
+      opening_trend: {
+        title: 'Динамика дебюта (30 дней)',
+        summary:
+          '{opening}: винрейт {wr_prev_pct}% → {wr_recent_pct}% (пред. 30 дн.: {n_prev} партий, последние 30 дн.: {n_recent} партий).',
+        recommendation: 'Закрепите то, что изменилось, или разберите просадку.',
       },
       time_control_best: {
         title: 'Сильный контроль времени',
@@ -266,10 +296,17 @@ export const appShellRu = {
       time_morning_vs_evening: {
         title: 'Время суток',
         summaryMorningBetter:
-          '{better}: {pct_b}% ({n_b} игр) vs {worse}: {pct_w}% ({n_w} игр), разница {gap_pp} п.п.',
+          '{better}: {pct_b}% ({n_b} игр) vs {worse}: {pct_w}% ({n_w} игр), разница {gap_pp} п.п. {timezone_caption}',
         summaryEveningBetter:
-          '{better}: {pct_b}% ({n_b} игр) vs {worse}: {pct_w}% ({n_w} игр), разница {gap_pp} п.п.',
+          '{better}: {pct_b}% ({n_b} игр) vs {worse}: {pct_w}% ({n_w} игр), разница {gap_pp} п.п. {timezone_caption}',
+        timezoneCaption: '(Время: локальная таймзона устройства, {tz})',
         recommendation: 'Учитывайте усталость и концентрацию при планировании партий.',
+      },
+      time_games_per_day_pattern: {
+        title: 'Партий в день',
+        summary:
+          '«Лёгкие» дни (1–4 партии): винрейт {wr_light_pct}% ({light_days} дней, {light_games} партий). Дни с 10+ партиями: {wr_heavy_pct}% ({heavy_days} дней, {heavy_games} партий), разница {gap_pp} п.п.',
+        recommendation: 'Сокращайте марафонские дни или делайте длинные паузы между сессиями.',
       },
       tactics_late_game_losses: {
         title: 'Поздние поражения',
@@ -290,16 +327,19 @@ export const appShellRu = {
           'Ошибки в ключевых моментах: миттельшпиль (≤50 полуходов) {mg_err}, эндшпиль (>50) {eg_err} из {total_err} на {n_games} партий с анализом. Доля эндшпиля: {eg_share}%.',
         recommendation: 'Добавьте эндшпильные задачи, если хвост партии проседает.',
       },
-      tactics_blunder_streak: {
-        title: 'Серия без зевков',
-        summary: 'Максимум подряд партий без зевка (по анализу): {best}.',
-        recommendation: 'Качество решений в этих партиях было высоким.',
-      },
       tactics_conversion_advantage: {
         title: 'Конверсия выигранных позиций',
         summary:
           'В {with_adv} партиях был перевес ≥+2.0, но {failed} закончились не победой ({rate}%).',
+        summaryWithSpeeds:
+          'В {with_adv} партиях был перевес ≥+2.0, но {failed} закончились не победой ({rate}%). {speed_split}',
         recommendation: 'Потренируйте технику и контроль времени при перевесе.',
+      },
+      tactics_accuracy_by_phase: {
+        title: 'Точность по фазам',
+        summary:
+          'По {n_games} проанализированным партиям: дебют (≤20 полуходов) {opening_pct}%, миттельшпиль (21–60) {middlegame_pct}%, эндшпиль (61+) {endgame_pct}%.',
+        recommendation: 'Сфокусируйте тренировку на фазе с самой низкой точностью.',
       },
       psychology_tilt: {
         title: 'Tilt-детектор',
@@ -313,12 +353,17 @@ export const appShellRu = {
           'Винрейт в партии сразу после поражения: {pct}% ({wins_after_loss}/{trials_after_loss}).',
         recommendation: 'Сравните с общим темпом — видно, удаётся ли «отыгрываться».',
       },
-      psychology_streak: {
-        titleWins: 'Серия побед',
-        titleLosses: 'Серия поражений',
-        summary: 'Текущая серия: {len} подряд.',
-        recommendationWins: 'Не переоценивайте форму — держите дисциплину.',
-        recommendationLosses: 'Сделайте перерыв или разберите последние партии.',
+      psychology_rest_effect: {
+        title: 'Усталость в сессии',
+        summary:
+          'Средняя точность по анализу: первая партия дня {mean_first_pct}% ({n_first_samples} выборок), с 5-й и далее в тот же день {mean_fifth_plus_pct}% ({n_late_samples} выборок), разница {drop_pp} п.п.',
+        recommendation: 'Остановитесь после нескольких партий или сделайте длинный перерыв.',
+      },
+      opponent_rating_performance: {
+        title: 'Игра по силе соперника',
+        summary:
+          'Винрейт: против слабее (−50 и ниже) {wr_weaker_pct}% ({n_weaker} партий), в паритет ±50 — {wr_equal_pct}% ({n_equal} партий), против сильнее (+50) {wr_stronger_pct}% ({n_stronger} партий). Просадка к «сильным»: {gap_equal_vs_stronger_pp} п.п.',
+        recommendation: 'Добавьте игру против чуть более сильных и разбор ключевых партий.',
       },
     },
   },

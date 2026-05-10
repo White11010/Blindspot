@@ -1,3 +1,4 @@
+// Commands entry: loads last 1000 games + analyses, runs all generators, replaces DB rows, clears today’s daily pick cache.
 use tauri::AppHandle;
 
 use crate::db::connection::get_conn;
@@ -10,10 +11,12 @@ use crate::db::users::repository as users_repository;
 
 use super::daily_pick;
 use super::generators::{
-    blunder_moments, blunder_patterns, openings, psychology, tactics_analysis, time_controls,
+    blunder_moments, blunder_patterns, openings, opponent_rating, psychology, tactics_analysis,
+    time_controls,
 };
 use super::insight_common::apply_metric_prev;
 
+/// Rebuilds the full insight card set for the active user and clears today’s persisted daily pick so rotation can change.
 pub fn regenerate_for_active_user(app: AppHandle) -> Result<Vec<Insight>, String> {
     let conn = get_conn(&app)?;
 
@@ -34,7 +37,7 @@ pub fn regenerate_for_active_user(app: AppHandle) -> Result<Vec<Insight>, String
 
     insights.extend(openings::generate(&user.id, &games));
     insights.extend(time_controls::generate(&user.id, &games));
-    insights.extend(psychology::generate(&user.id, &games));
+    insights.extend(psychology::generate(&user.id, &games, &analyses));
     insights.extend(tactics_analysis::generate(
         &user.id,
         &games,
@@ -42,7 +45,8 @@ pub fn regenerate_for_active_user(app: AppHandle) -> Result<Vec<Insight>, String
         &moments,
     ));
     insights.extend(blunder_patterns::generate(&user.id, &games));
-    insights.extend(blunder_moments::generate(&user.id, &games));
+    insights.extend(blunder_moments::generate(&user.id, &games, &analyses));
+    insights.extend(opponent_rating::generate(&user.id, &games));
 
     apply_metric_prev(&mut insights, &previous);
 
@@ -82,6 +86,7 @@ pub fn get_daily_insight_for_active_user(app: AppHandle) -> Result<Option<Insigh
     Ok(picked)
 }
 
+/// Returns all stored cards for the active user (Insights page list) without running generators.
 pub fn get_for_active_user(app: AppHandle) -> Result<Vec<Insight>, String> {
     let conn = get_conn(&app)?;
 

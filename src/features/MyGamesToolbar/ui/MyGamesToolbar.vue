@@ -54,6 +54,20 @@
           closable-chips
           class="toolbar-field toolbar-field--grow"
         />
+        <v-select
+          v-model="playerColors"
+          :items="colorItems"
+          item-title="label"
+          item-value="value"
+          :label="t('myGames.toolbar.pieceColor')"
+          density="comfortable"
+          variant="outlined"
+          hide-details
+          multiple
+          chips
+          closable-chips
+          class="toolbar-field toolbar-field--grow"
+        />
       </div>
 
       <div class="d-flex flex-wrap ga-2">
@@ -93,6 +107,8 @@
 </template>
 
 <script setup lang="ts">
+// Feature slice: encapsulates one user flow or form; parent pages/widgets compose it and pass props/events.
+
 import { storeToRefs } from 'pinia';
 import { computed } from 'vue';
 
@@ -116,7 +132,7 @@ const patternSelectItems = computed(() =>
 );
 
 const filtersStore = useMyGamesFiltersStore();
-const { searchText, results, speeds, periods, patternTag, openingValue } =
+const { searchText, results, speeds, periods, patternTag, openingValue, playerColors } =
   storeToRefs(filtersStore);
 
 const resultItems = computed(() => [
@@ -137,6 +153,11 @@ const periodItems = computed(() => [
   { value: '30' as const, label: t('myGames.toolbar.periods.d30') },
   { value: '90' as const, label: t('myGames.toolbar.periods.d90') },
   { value: 'all' as const, label: t('myGames.toolbar.periods.all') },
+]);
+
+const colorItems = computed(() => [
+  { value: 'white' as const, label: t('myGames.toolbar.colors.white') },
+  { value: 'black' as const, label: t('myGames.toolbar.colors.black') },
 ]);
 
 function onReset() {

@@ -15,6 +15,8 @@
 </template>
 
 <script setup lang="ts">
+// Composite widget: presents a focused dashboard block; reads shared Pinia stores and Tauri invoke where needed.
+
 import { computed } from 'vue';
 import { useTheme } from 'vuetify';
 

@@ -1,3 +1,4 @@
+// Client-side replay buffer for the analysis board (`chess.js` SAN history + cursor); analyze page drives this store.
 import { defineStore } from 'pinia';
 import { Chess } from 'chess.js';
 import type { Board, MoveItem } from './board.types';
@@ -7,6 +8,7 @@ interface State {
 }
 
 export const useBoardStore = defineStore('board', {
+  // `history` holds SAN+FEN pairs; `currentIndex` supports scrubbing without mutating future moves when branching.
   state: (): State => ({
     board: {
       history: [],

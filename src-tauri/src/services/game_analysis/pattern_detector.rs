@@ -1,9 +1,11 @@
+// Heuristic tags (weights) from eval curve + blunder phase histogram; consumed by insights, similar games, and UI badges.
 use crate::db::games::model::Game;
 
 use super::classifier::ClassifiedMove;
 
 pub type PatternTag = (String, i64);
 
+/// Emits weighted tags like opening_blunder or lost_winning_position using fixed cp thresholds and game outcome.
 pub fn detect_patterns(
     game: &Game,
     eval_history: &[i32],
@@ -41,6 +43,7 @@ pub fn detect_patterns(
             continue;
         }
         let ply = c.half_move_index + 1;
+        // Fixed ply bands match insight generators so opening blunders align across features without FEN phase detection.
         if ply <= 10 {
             opening_bl += 1;
         } else if ply <= 25 {
@@ -74,10 +77,15 @@ pub fn detect_patterns(
         tags.push(("low_accuracy".into(), 2));
     }
 
+    let halfmoves = eval_history.len().saturating_sub(1);
+    if lost && halfmoves >= 40 {
+        tags.push(("late_game_loss".into(), 2));
+    }
+
     tags
 }
 
-/// Primary tag for system connection / insight (highest weight first).
+/// Chooses the tag with max weight for recurring-pattern copy; ties broken by insertion order upstream.
 pub fn primary_tag(tags: &[PatternTag]) -> Option<String> {
     tags.iter()
         .max_by_key(|(_, w)| *w)

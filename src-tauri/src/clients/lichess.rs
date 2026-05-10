@@ -1,13 +1,12 @@
-// src-tauri/src/clients/lichess.rs
-
+// Lichess REST calls for account and NDJSON games export; bearer token comes from the OS keyring via `auth` service.
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
 use crate::services::auth;
 
-/// Prefix for `sync_games` errors when Lichess returns HTTP 429 (frontend schedules retry).
+/// Error prefix when Lichess returns 429 so the UI backs off instead of treating it as a generic failure.
 pub const LICHESS_RATE_LIMITED: &str = "RATE_LIMITED:";
-/// Prefix when token is rejected (do not treat as rate limit).
+/// Error prefix for 401 so callers distinguish expired tokens from throttling and prompt re-auth.
 pub const LICHESS_UNAUTHORIZED: &str = "UNAUTHORIZED:";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -31,7 +30,7 @@ pub struct LichessProfile {
     pub perfs: Option<Perfs>,
 }
 
-/// GET /api/account
+/// Fetches the logged-in Lichess profile (`GET /api/account`) for sync and user upsert after token connect.
 pub async fn fetch_me(app: &AppHandle) -> Result<LichessProfile, String> {
     let token = auth::load_token(app)?.ok_or("Token not found")?;
 
@@ -55,9 +54,7 @@ pub async fn fetch_me(app: &AppHandle) -> Result<LichessProfile, String> {
         .map_err(|e| e.to_string())
 }
 
-/// GET /api/games/user/{username}
-/// When `since_ms` is set, only games created at or after that timestamp (ms) are returned.
-/// When `max_games` is set, limits how many games the API returns (e.g. 500 for Versus).
+/// Streams NDJSON games (`GET /api/games/user/{username}`); optional `since_ms` and `max_games` map to Lichess query params.
 pub async fn fetch_games(
     app: &AppHandle,
     username: &str,

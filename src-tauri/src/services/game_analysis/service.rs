@@ -1,3 +1,4 @@
+// Orchestrates analyze vs persist vs batch worker; bridges Stockfish, classifier, pattern detector, and SQLite repos.
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use chrono::Utc;
@@ -22,6 +23,7 @@ use super::model::{GameAnalysisFull, KeyInsight, SimilarGames, SystemConnection}
 use super::pattern_detector::detect_patterns;
 use super::system_connection::build_system_connection;
 
+/// Minimal metrics for Versus transient runs (no DB write): accuracy, ACPL, adv swing, blunders, pattern tag names.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct TransientAnalysisResult {
     pub accuracy: f64,
@@ -32,6 +34,7 @@ pub struct TransientAnalysisResult {
     pub pattern_tags: Vec<String>,
 }
 
+/// Runs the same eval pass as full analysis but skips persistence; used for opponent games in Versus only.
 pub fn analyze_game_transient(
     app: &AppHandle,
     game: &crate::db::games::model::Game,
@@ -74,9 +77,10 @@ pub fn analyze_game_transient(
 }
 
 static ANALYSIS_CANCEL: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
-/// Only one `analyze_pending_games` worker thread at a time.
+// Prevents overlapping background threads that would contend on the single global Stockfish mutex and duplicate work.
 static BATCH_RUNNING: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 
+/// Signals the background batch loop to stop after the current game; paired with `analyze_pending_games` worker.
 pub fn cancel_pending_analysis() {
     ANALYSIS_CANCEL.store(true, Ordering::SeqCst);
 }
@@ -85,6 +89,7 @@ fn now_ms() -> i64 {
     Utc::now().timestamp_millis()
 }
 
+/// Tag overlap (broad) and first key-moment kind overlap (narrow) for the game detail similar-games panel.
 pub fn get_similar_games(app: &AppHandle, game_id: &str) -> Result<SimilarGames, String> {
     let conn = get_conn(app)?;
     let stored = ga_repo::get_analysis_stored(&conn, game_id)
@@ -110,6 +115,7 @@ pub fn get_similar_games(app: &AppHandle, game_id: &str) -> Result<SimilarGames,
     )
     .unwrap_or_default();
 
+    // First picked moment is the primary narrative hook; narrow matches reuse that moment type across the library.
     let narrow_kind = key_moments
         .first()
         .map(|m| m.kind.as_str())
@@ -121,6 +127,7 @@ pub fn get_similar_games(app: &AppHandle, game_id: &str) -> Result<SimilarGames,
     Ok(SimilarGames { broad, narrow })
 }
 
+/// Loads stored analysis JSON into `GameAnalysisFull`; attaches similar games only when status is `done`.
 pub fn get_analysis(app: &AppHandle, game_id: &str) -> Result<Option<GameAnalysisFull>, String> {
     let conn = get_conn(app)?;
     let stored = ga_repo::get_analysis_stored(&conn, game_id).map_err(|e| e.to_string())?;
@@ -208,8 +215,9 @@ fn stored_to_full(stored: ga_repo::GameAnalysisStored) -> Result<GameAnalysisFul
     })
 }
 
+/// Full persist path for one game: engine run, tags, key moments, upsert row, then second-pass system_connection patch.
 pub fn analyze_game(app: &AppHandle, game_id: &str, depth: Option<u8>) -> Result<GameAnalysisFull, String> {
-    let depth = depth.unwrap_or(14);
+    let depth = depth.unwrap_or(14); // Default depth balances quality vs batch time for typical user libraries.
     let conn = get_conn(app)?;
     let user = users_repo::get_active_user(&conn)?.ok_or("Active user not found")?;
 
@@ -303,6 +311,7 @@ pub fn analyze_game(app: &AppHandle, game_id: &str, depth: Option<u8>) -> Result
 
     ga_repo::upsert_analysis(&conn, &row, &tag_rows, &moment_rows).map_err(|e| e.to_string())?;
 
+    // System connection queries similar games in DB after base upsert so tags exist for correlation counts.
     let system = build_system_connection(&conn, &user.username, &user.id, &tags)?;
     let system_json = serde_json::to_string(&system).map_err(|e| e.to_string())?;
     ga_repo::update_system_connection_json(&conn, game_id, &system_json, now_ms())
@@ -368,6 +377,7 @@ fn persist_failed(
     Err(msg.to_string())
 }
 
+/// Spawns a background thread to analyze up to 10k pending ids with progress events; no-op if queue empty or busy.
 pub fn analyze_pending_games(app: AppHandle, depth: Option<u8>) -> Result<(), String> {
     let conn = get_conn(&app)?;
     let user = users_repo::get_active_user(&conn)?.ok_or("Active user not found")?;
@@ -381,6 +391,7 @@ pub fn analyze_pending_games(app: AppHandle, depth: Option<u8>) -> Result<(), St
         return Ok(());
     }
 
+    // High cap drains backlog in one run; UI still cancels mid-loop; oldest-first ordering avoids starving old games.
     let pending = ga_repo::get_pending_game_ids(&conn, &user.username, 10_000)
         .map_err(|e| e.to_string())?;
 
