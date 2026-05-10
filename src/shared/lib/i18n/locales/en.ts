@@ -94,6 +94,7 @@ export default {
       slow_drift: 'Slow drift (no blunders, high ACPL)',
       low_accuracy: 'Low accuracy',
       late_game_loss: 'Long game loss (≥40 moves)',
+      long_loss_min_halfmoves: 'Late loss',
     },
   },
   ...shellRest,

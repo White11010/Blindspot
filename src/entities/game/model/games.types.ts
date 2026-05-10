@@ -43,6 +43,8 @@ export interface Game {
   analysis_accuracy?: number | null;
   analysis_acpl?: number | null;
   pattern_tags?: string[];
+  /** From `get_games`: same ply count as Rust `total_halfmoves` (moves string and/or eval history). */
+  halfmoves_total?: number;
 }
 
 export type MyGamesPeriod = '7' | '30' | '90' | 'all';

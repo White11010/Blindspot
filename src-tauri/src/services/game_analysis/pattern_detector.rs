@@ -1,5 +1,6 @@
 // Heuristic tags (weights) from eval curve + blunder phase histogram; consumed by insights, similar games, and UI badges.
 use crate::db::games::model::Game;
+use crate::parsers::move_count::total_halfmoves;
 
 use super::classifier::ClassifiedMove;
 
@@ -77,8 +78,16 @@ pub fn detect_patterns(
         tags.push(("low_accuracy".into(), 2));
     }
 
-    let halfmoves = eval_history.len().saturating_sub(1);
-    if lost && halfmoves >= 40 {
+    // Match `tactics_late_game_losses` insight + My Games filter: ply count from eval when present, else UCI `moves`.
+    let hm = total_halfmoves(
+        game.moves.as_deref(),
+        if eval_history.is_empty() {
+            None
+        } else {
+            Some(eval_history.len())
+        },
+    );
+    if lost && hm >= 40 {
         tags.push(("late_game_loss".into(), 2));
     }
 

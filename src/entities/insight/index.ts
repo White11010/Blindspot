@@ -13,7 +13,6 @@ export {
 export {
   buildMyGamesFiltersFromInsight,
   canNavigateInsightToMyGames,
-  INSIGHT_LATE_GAME_LOSS_PATTERN,
 } from './lib/insightMyGamesNavigation';
 export type { InsightMyGamesFilterPatch } from './lib/insightMyGamesNavigation';
 export { useInsightsLoadQuery, useRegenerateInsightsQuery } from './lib/insightsQuery';

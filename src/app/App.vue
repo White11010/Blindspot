@@ -10,6 +10,7 @@
       <v-divider></v-divider>
       <v-list-item
         class="mt-4"
+        :color="route?.name === 'Home' ? 'secondary' : undefined"
         :active="route?.name === 'Home'"
         link
         :title="t('layout.navHome')"
@@ -18,6 +19,7 @@
       ></v-list-item>
       <v-list-item
         class="mt-2"
+        :color="route?.name === 'Insights' ? 'secondary' : undefined"
         :active="route?.name === 'Insights'"
         link
         :title="t('layout.navInsights')"
@@ -26,6 +28,7 @@
       ></v-list-item>
       <v-list-item
         class="mt-2"
+        :color="route?.name === 'MyGames' ? 'secondary' : undefined"
         :active="route?.name === 'MyGames' || route?.name === 'GameDetails'"
         link
         :title="t('layout.navMyGames')"
@@ -34,24 +37,17 @@
       ></v-list-item>
       <v-list-item
         class="mt-2"
+        :color="route?.name === 'Versus' ? 'secondary' : undefined"
         :active="route?.name === 'Versus'"
         link
         :title="t('layout.navVersus')"
         prepend-icon="mdi-sword-cross"
         @click="router?.push('/versus')"
       ></v-list-item>
-      <!-- <v-list-item
-        class="mt-2"
-        :active="route?.name === 'AnalizeBoard'"
-        link
-        title="Analize Board"
-        prepend-icon="mdi-microscope"
-        @click="router?.push('/analize-board')"
-      ></v-list-item> -->
-
       <template #append>
         <v-list-item
           class="mb-1"
+          :color="route?.name === 'Settings' ? 'secondary' : undefined"
           :active="route?.name === 'Settings'"
           link
           :title="t('layout.navSettings')"

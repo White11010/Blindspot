@@ -1,10 +1,59 @@
-import { normalizePatternTagId } from '@/shared/lib/patternTags';
+import { MY_GAMES_LONG_LOSS_FILTER_TAG, normalizePatternTagId } from '@/shared/lib/patternTags';
 
 import type { Game, MyGamesPeriod, MyGamesPlayerColor } from '../model/games.types';
 
 export { normalizePatternTagId };
 
 const DAY_MS = 86_400_000;
+
+function isFileCode(c: number): boolean {
+  return c >= 97 && c <= 104; // a–h
+}
+
+function isRankCode(c: number): boolean {
+  return c >= 49 && c <= 56; // 1–8
+}
+
+/** UCI move token; mirrors Rust `move_count::is_uci_token` for ply counts aligned with backend insights. */
+export function isUciToken(token: string): boolean {
+  const u = token;
+  const n = u.length;
+  if (n === 4) {
+    const c0 = u.charCodeAt(0);
+    const c1 = u.charCodeAt(1);
+    const c2 = u.charCodeAt(2);
+    const c3 = u.charCodeAt(3);
+    return isFileCode(c0) && isRankCode(c1) && isFileCode(c2) && isRankCode(c3);
+  }
+  if (n === 5) {
+    const c4 = u.charCodeAt(4);
+    return (
+      isFileCode(u.charCodeAt(0)) &&
+      isRankCode(u.charCodeAt(1)) &&
+      isFileCode(u.charCodeAt(2)) &&
+      isRankCode(u.charCodeAt(3)) &&
+      (c4 === 113 || c4 === 114 || c4 === 98 || c4 === 110) // q r b n
+    );
+  }
+  return false;
+}
+
+export function countUciHalfmovesFromMovesStr(moves: string | null | undefined): number {
+  const s = (moves ?? '').trim();
+  if (!s) {
+    return 0;
+  }
+  return s.split(/\s+/).filter(isUciToken).length;
+}
+
+/** Prefer server `halfmoves_total` (matches insights) when the list row includes it. */
+export function effectiveHalfmovesForFilter(game: Game): number {
+  const n = game.halfmoves_total;
+  if (typeof n === 'number' && Number.isFinite(n) && n >= 0) {
+    return Math.floor(n);
+  }
+  return countUciHalfmovesFromMovesStr(game.moves);
+}
 
 /** `null` = no cutoff (all time). */
 export function periodCutoffMs(periods: MyGamesPeriod[]): number | null {
@@ -36,6 +85,9 @@ function openingKey(game: Game): string {
   return `${game.opening_eco ?? ''}|${game.opening_name ?? ''}`;
 }
 
+/** Same threshold as `tactics_late_game_losses` / `move_count::total_halfmoves` on the backend. */
+const LONG_LOSS_MIN_HALFMOVES = 40;
+
 export function filterMyGames(
   games: Game[],
   opts: {
@@ -45,11 +97,13 @@ export function filterMyGames(
     periods: MyGamesPeriod[];
     patternTag: string | null;
     openingValue: string | null;
+    openingNameExact: string | null;
     playerColors: MyGamesPlayerColor[];
   },
 ): Game[] {
   const q = opts.searchText.trim().toLowerCase();
   const cutoff = periodCutoffMs(opts.periods);
+  const openingExact = opts.openingNameExact?.trim() ?? '';
 
   return games.filter((g) => {
     if (cutoff !== null && g.created_at < cutoff) {
@@ -63,12 +117,22 @@ export function filterMyGames(
     }
     if (opts.patternTag) {
       const want = normalizePatternTagId(opts.patternTag);
-      const tags = (g.pattern_tags ?? []).map((t) => normalizePatternTagId(t));
-      if (!tags.includes(want)) {
-        return false;
+      if (want === normalizePatternTagId(MY_GAMES_LONG_LOSS_FILTER_TAG)) {
+        if (g.player_result !== 'loss' || effectiveHalfmovesForFilter(g) < LONG_LOSS_MIN_HALFMOVES) {
+          return false;
+        }
+      } else {
+        const tags = (g.pattern_tags ?? []).map((t) => normalizePatternTagId(t));
+        if (!tags.includes(want)) {
+          return false;
+        }
       }
     }
-    if (opts.openingValue && openingKey(g) !== opts.openingValue) {
+    if (openingExact !== '') {
+      if ((g.opening_name ?? '').trim() !== openingExact) {
+        return false;
+      }
+    } else if (opts.openingValue && openingKey(g) !== opts.openingValue) {
       return false;
     }
     if (opts.playerColors.length && !opts.playerColors.includes(g.player_color)) {
@@ -101,10 +165,17 @@ export type OpeningOption = { value: string; title: string };
 export type PatternOption = { value: string; title: string };
 
 export function patternTagOptions(games: Game[]): PatternOption[] {
-  return uniquePatternTags(games).map((tag) => ({
-    value: tag,
-    title: tag.replace(/_/g, ' '),
-  }));
+  const synthetic: PatternOption = {
+    value: MY_GAMES_LONG_LOSS_FILTER_TAG,
+    title: '',
+  };
+  const fromGames = uniquePatternTags(games)
+    .filter((tag) => normalizePatternTagId(tag) !== normalizePatternTagId(MY_GAMES_LONG_LOSS_FILTER_TAG))
+    .map((tag) => ({
+      value: tag,
+      title: tag.replace(/_/g, ' '),
+    }));
+  return [synthetic, ...fromGames];
 }
 
 export function uniqueOpeningOptions(games: Game[]): OpeningOption[] {

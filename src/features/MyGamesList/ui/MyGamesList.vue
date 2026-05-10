@@ -278,11 +278,16 @@ const boardPreviewStyle = computed(() => {
   }
   const pad = 8;
   const boardPx = 200;
+  const panelW = boardPx + pad * 2;
   const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
-  let left = b.rect.right + pad;
-  if (left + boardPx > vw - pad) {
-    left = Math.max(pad, b.rect.left - pad - boardPx);
+  // Prefer floating board to the left of the row; fall back to the right if it would clip off-screen.
+  let left = b.rect.left - pad - panelW;
+  if (left < pad) {
+    left = b.rect.right + pad;
+  }
+  if (left + panelW > vw - pad) {
+    left = Math.max(pad, vw - pad - panelW);
   }
   const top = Math.max(pad, Math.min(b.rect.top, vh - boardPx - pad));
   return {

@@ -51,4 +51,6 @@ pub struct GameListItem {
     pub analysis_accuracy: Option<f64>,
     pub analysis_acpl: Option<f64>,
     pub pattern_tags: Vec<String>,
+    /// Ply count aligned with `move_count::total_halfmoves` (UCI `moves` or completed analysis eval length).
+    pub halfmoves_total: i64,
 }

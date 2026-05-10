@@ -58,6 +58,8 @@ export interface MyGamesFiltersSnapshot {
   periods: MyGamesPeriod[];
   patternTag: string | null;
   openingValue: string | null;
+  /** Exact Lichess `opening_name` (insight navigation); excludes longer-name supersets from substring search. */
+  openingNameExact: string | null;
   /** Empty = all colors; matches `Game.player_color`. */
   playerColors: MyGamesPlayerColor[];
   sortBy: MyGamesTableSortItem[];
@@ -71,6 +73,7 @@ function defaultSnapshot(): MyGamesFiltersSnapshot {
     periods: [],
     patternTag: null,
     openingValue: null,
+    openingNameExact: null,
     playerColors: [],
     sortBy: [...DEFAULT_SORT_BY],
   };
@@ -119,6 +122,7 @@ export const useMyGamesFiltersStore = defineStore('myGamesFilters', {
         periods: this.periods,
         patternTag: this.patternTag,
         openingValue: this.openingValue,
+        openingNameExact: this.openingNameExact,
         playerColors: [...this.playerColors],
         sortBy: [...this.sortBy],
       });

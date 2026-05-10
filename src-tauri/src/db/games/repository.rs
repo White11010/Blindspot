@@ -1,6 +1,7 @@
 // Insert/update and read paths for `games`, including joins to analyses for list and versus aggregates.
 use rusqlite::{params, Connection};
 
+use crate::parsers::move_count::total_halfmoves;
 use crate::services::versus_metrics::MetricGameRow;
 
 use super::model::{Game, GameListItem};
@@ -224,6 +225,11 @@ fn parse_pattern_tags_csv(raw: Option<String>) -> Vec<String> {
     }
 }
 
+fn eval_history_len_from_json(raw: &Option<String>) -> Option<usize> {
+    raw.as_ref()
+        .and_then(|j| serde_json::from_str::<Vec<i32>>(j).ok().map(|v| v.len()))
+}
+
 /// My Games list: joins latest completed analysis and pattern tags for `user_id` so the UI shows accuracy and badges.
 pub fn get_game_list_items(
     conn: &Connection,
@@ -263,6 +269,7 @@ pub fn get_game_list_items(
             g.pgn,
             ga.accuracy,
             ga.avg_centipawn_loss,
+            ga.eval_history_json,
             (
                 SELECT GROUP_CONCAT(tag, ',')
                 FROM game_pattern_tags t
@@ -309,12 +316,20 @@ pub fn get_game_list_items(
             last_fen: row.get(25)?,
             pgn: row.get(26)?,
         };
-        let tags_raw: Option<String> = row.get(29)?;
+        let analysis_accuracy: Option<f64> = row.get(27)?;
+        let analysis_acpl: Option<f64> = row.get(28)?;
+        let eval_history_json: Option<String> = row.get(29)?;
+        let tags_raw: Option<String> = row.get(30)?;
+        let hm = total_halfmoves(
+            game.moves.as_deref(),
+            eval_history_len_from_json(&eval_history_json),
+        );
         Ok(GameListItem {
             base: game,
-            analysis_accuracy: row.get(27)?,
-            analysis_acpl: row.get(28)?,
+            analysis_accuracy,
+            analysis_acpl,
             pattern_tags: parse_pattern_tags_csv(tags_raw),
+            halfmoves_total: hm,
         })
     })?;
 

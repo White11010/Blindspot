@@ -196,7 +196,7 @@ import { storeToRefs } from 'pinia';
 import { computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { useGamesStore, useMyGamesFiltersStore } from '@/entities/game';
+import { useMyGamesFiltersStore } from '@/entities/game';
 import {
   buildMyGamesFiltersFromInsight,
   canNavigateInsightToMyGames,
@@ -214,7 +214,6 @@ import { MetricDelta } from '@/shared/ui';
 const { t, te } = useI18n();
 const router = useRouter();
 const insightsStore = useInsightsStore();
-const gamesStore = useGamesStore();
 const filtersStore = useMyGamesFiltersStore();
 const insightsFiltersStore = useInsightsFiltersStore();
 const { heroInsight } = storeToRefs(insightsStore);
@@ -232,7 +231,7 @@ watch(
 
 function goToMyGamesFromInsight(insight: Insight): void {
   filtersStore.reset();
-  const patch = buildMyGamesFiltersFromInsight(insight, gamesStore.games);
+  const patch = buildMyGamesFiltersFromInsight(insight);
   filtersStore.$patch(patch);
   filtersStore.persist();
   void router.push({ name: 'MyGames' });

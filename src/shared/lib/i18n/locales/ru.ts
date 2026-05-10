@@ -94,6 +94,7 @@ export default {
       slow_drift: 'Плавное ухудшение (без зевков, высокий ACPL)',
       low_accuracy: 'Низкая точность',
       late_game_loss: 'Поражение в длинной партии (≥40 ходов)',
+      long_loss_min_halfmoves: 'Позднее поражение',
     },
   },
   ...shellRest,

@@ -17,6 +17,9 @@ export const BACKEND_PATTERN_TAG_IDS = [
 
 export type BackendPatternTagId = (typeof BACKEND_PATTERN_TAG_IDS)[number];
 
+/** Virtual My Games pattern filter (not stored in `game_pattern_tags`); matches the late-loss insight cohort. */
+export const MY_GAMES_LONG_LOSS_FILTER_TAG = 'long_loss_min_halfmoves';
+
 const KNOWN = new Set<string>(BACKEND_PATTERN_TAG_IDS);
 
 /** Canonical tag id (snake_case); tolerates display strings with spaces. */

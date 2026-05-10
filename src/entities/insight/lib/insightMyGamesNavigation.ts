@@ -1,14 +1,19 @@
-import { uniqueOpeningOptions, type Game } from '@/entities/game';
 import type { MyGamesFiltersSnapshot } from '@/entities/game/model/myGamesFilters.store';
+import { MY_GAMES_LONG_LOSS_FILTER_TAG } from '@/shared/lib/patternTags';
 
 import type { Insight } from '../model/insight.types';
 import { parseInsightPayload, speedLabelFromSubjectKey } from './insightPayload';
 
-export const INSIGHT_LATE_GAME_LOSS_PATTERN = 'late_game_loss';
-
 export type InsightMyGamesFilterPatch = Pick<
   MyGamesFiltersSnapshot,
-  'searchText' | 'results' | 'speeds' | 'periods' | 'patternTag' | 'openingValue' | 'playerColors'
+  | 'searchText'
+  | 'results'
+  | 'speeds'
+  | 'periods'
+  | 'patternTag'
+  | 'openingValue'
+  | 'openingNameExact'
+  | 'playerColors'
 >;
 
 function emptyPatch(): InsightMyGamesFilterPatch {
@@ -19,6 +24,7 @@ function emptyPatch(): InsightMyGamesFilterPatch {
     periods: [],
     patternTag: null,
     openingValue: null,
+    openingNameExact: null,
     playerColors: [],
   };
 }
@@ -52,24 +58,7 @@ function speedSlugFromLabel(label: string): string | null {
   return null;
 }
 
-function openingValueFromGames(games: readonly Game[], openingName: string): string | null {
-  const opts = uniqueOpeningOptions([...games]);
-  const norm = openingName.trim().toLowerCase();
-  const matches = opts.filter((o) => {
-    const idx = o.value.indexOf('|');
-    const namePart = idx >= 0 ? o.value.slice(idx + 1) : o.value;
-    return namePart.trim().toLowerCase() === norm;
-  });
-  if (matches.length === 1) {
-    return matches[0].value;
-  }
-  return null;
-}
-
-export function buildMyGamesFiltersFromInsight(
-  insight: Insight,
-  games: readonly Game[],
-): InsightMyGamesFilterPatch {
+export function buildMyGamesFiltersFromInsight(insight: Insight): InsightMyGamesFilterPatch {
   if (!canNavigateInsightToMyGames(insight)) {
     return emptyPatch();
   }
@@ -83,11 +72,8 @@ export function buildMyGamesFiltersFromInsight(
     if (!openingName.trim()) {
       return emptyPatch();
     }
-    const ov = openingValueFromGames(games, openingName);
-    if (ov != null) {
-      return { ...emptyPatch(), openingValue: ov };
-    }
-    return { ...emptyPatch(), searchText: openingName };
+    // Insights aggregate by exact `opening_name` in Rust; match that here (substring search would include longer Lichess names).
+    return { ...emptyPatch(), openingNameExact: openingName.trim() };
   }
 
   if (k === 'time_control_best' || k === 'time_control_worst' || k === 'time_rating_growth_30d') {
@@ -104,11 +90,8 @@ export function buildMyGamesFiltersFromInsight(
   }
 
   if (k === 'tactics_late_game_losses') {
-    return {
-      ...emptyPatch(),
-      results: ['loss'],
-      patternTag: INSIGHT_LATE_GAME_LOSS_PATTERN,
-    };
+    // Virtual pattern in My Games toolbar (same cohort as the insight, clearable via the pattern control).
+    return { ...emptyPatch(), patternTag: MY_GAMES_LONG_LOSS_FILTER_TAG };
   }
 
   if (k === 'tactics_side_performance') {

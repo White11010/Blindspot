@@ -34,6 +34,7 @@ export function useMyGamesSection() {
       periods: filtersStore.periods,
       patternTag: filtersStore.patternTag,
       openingValue: filtersStore.openingValue,
+      openingNameExact: filtersStore.openingNameExact,
       playerColors: filtersStore.playerColors,
     });
     return filtered;
@@ -52,6 +53,7 @@ export function useMyGamesSection() {
       filtersStore.periods.length > 0 ||
       filtersStore.patternTag != null ||
       filtersStore.openingValue != null ||
+      filtersStore.openingNameExact != null ||
       filtersStore.playerColors.length > 0;
     return hasSearch || hasChipFilters || filteredLen !== total;
   });
