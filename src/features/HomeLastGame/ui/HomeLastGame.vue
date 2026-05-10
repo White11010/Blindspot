@@ -47,7 +47,7 @@
               <v-btn
                 class="button-width-12 home-last-game__btn"
                 color="primary"
-                variant="elevated"
+                variant="outlined"
                 prepend-icon="mdi-open-in-new"
                 @click="onAnalizeButtonClick(lastGame)"
               >

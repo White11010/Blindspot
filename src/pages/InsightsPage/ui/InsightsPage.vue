@@ -1,8 +1,6 @@
 <template>
-  <div class="insights-page">
-    <div class="insights-page__container">
-      <insights-block />
-    </div>
+  <div class="insights-page d-flex flex-column flex-1 h-100 min-h-0 overflow-y-auto overflow-x-hidden pa-5">
+    <insights-block />
   </div>
 </template>
 
@@ -10,17 +8,10 @@
 import { InsightsBlock } from '@/widgets/InsightsBlock';
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .insights-page {
+  box-sizing: border-box;
   width: 100%;
-  flex: 1;
-  height: 100%;
-  overflow-y: auto;
-
-  &__container {
-    padding: 2rem;
-    max-width: 58rem;
-    margin: 0 auto;
-  }
+  border: none;
 }
 </style>
