@@ -96,5 +96,4 @@ import { HomeTopInsightBlock } from '@/features/HomeTopInsightBlock';
     min-height: min-content;
   }
 }
-
 </style>

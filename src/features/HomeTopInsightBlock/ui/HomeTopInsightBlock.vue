@@ -275,7 +275,7 @@ function goAllInsights(): void {
 }
 
 .home-top-insight__body {
-  padding: 1.125rem 1.25rem 1rem;
+  padding: 1.125rem 1.25rem 0 1rem;
   flex: 1 1 auto;
 }
 
@@ -439,7 +439,6 @@ function goAllInsights(): void {
   padding-bottom: 1.25rem;
 }
 </style>
-
 <!-- Theme overrides: parent has .v-theme--light, not this card -->
 <style lang="scss">
 .v-theme--light .home-top-insight {
