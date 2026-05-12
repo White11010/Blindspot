@@ -8,14 +8,10 @@
             <th class="text-left text-caption text-medium-emphasis text-uppercase">
               {{ t('versusPage.colMetric') }}
             </th>
-            <th
-              class="text-center text-caption text-medium-emphasis text-uppercase text-primary"
-            >
+            <th class="text-center text-caption text-medium-emphasis text-uppercase text-primary">
               {{ t('versusPage.colYou') }}
             </th>
-            <th
-              class="text-center text-caption text-medium-emphasis text-uppercase text-warning"
-            >
+            <th class="text-center text-caption text-medium-emphasis text-uppercase text-warning">
               {{ t('versusPage.colOpp', { name: slice.opponentSide.username }) }}
             </th>
             <th class="text-caption text-medium-emphasis text-uppercase" />
@@ -37,28 +33,13 @@
               {{ m.oppFmt }}
             </td>
             <td class="text-center">
-              <v-chip
-                v-if="m.win === 'you'"
-                size="x-small"
-                color="primary"
-                variant="tonal"
-              >
+              <v-chip v-if="m.win === 'you'" size="small" color="primary" variant="tonal">
                 {{ t('versusPage.verdictYou') }}
               </v-chip>
-              <v-chip
-                v-else-if="m.win === 'opp'"
-                size="x-small"
-                color="warning"
-                variant="tonal"
-              >
+              <v-chip v-else-if="m.win === 'opp'" size="small" color="warning" variant="tonal">
                 {{ t('versusPage.verdictOpp', { name: slice.opponentSide.username }) }}
               </v-chip>
-              <v-chip
-                v-else-if="m.win === 'tie'"
-                size="x-small"
-                color="secondary"
-                variant="tonal"
-              >
+              <v-chip v-else-if="m.win === 'tie'" size="small" color="secondary" variant="tonal">
                 {{ t('versusPage.verdictTie') }}
               </v-chip>
             </td>
@@ -85,12 +66,7 @@ const props = defineProps<{
 const { t } = useI18n();
 
 const metricTable = computed(() =>
-  buildVersusMetricTable(
-    props.slice.selfSide,
-    props.slice.opponentSide,
-    props.speedLabel,
-    t,
-  ),
+  buildVersusMetricTable(props.slice.selfSide, props.slice.opponentSide, props.speedLabel, t),
 );
 </script>
 

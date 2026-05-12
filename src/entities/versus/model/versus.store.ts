@@ -19,6 +19,7 @@ export const useVersusStore = defineStore('versus', {
     errorMessage: null as string | null,
     progress: null as VersusProgressPayload | null,
     result: null as VersusCompareResponse | null,
+    compareSeq: 0,
   }),
 
   getters: {
@@ -30,6 +31,8 @@ export const useVersusStore = defineStore('versus', {
 
   actions: {
     setProgress(payload: VersusProgressPayload | null): void {
+      // Ignore late progress events that arrive after a cancel or after the compare finished.
+      if (payload && !this.loading) return;
       this.progress = payload;
     },
 
@@ -40,6 +43,12 @@ export const useVersusStore = defineStore('versus', {
     },
 
     cancel(): void {
+      // Invalidate the in-flight compare so its late resolution cannot repopulate state.
+      this.compareSeq++;
+      this.loading = false;
+      this.progress = null;
+      this.errorMessage = null;
+      this.result = null;
       void invoke('versus_cancel_compare');
     },
 
@@ -47,6 +56,7 @@ export const useVersusStore = defineStore('versus', {
       const trimmed = this.opponentUsernameInput.trim();
       if (!trimmed || this.loading) return;
 
+      const mySeq = ++this.compareSeq;
       this.loading = true;
       this.errorMessage = null;
       this.result = null;
@@ -57,13 +67,17 @@ export const useVersusStore = defineStore('versus', {
         const res = await invoke<VersusCompareResponse>('versus_compare', {
           opponentUsername: trimmed,
         });
+        if (mySeq !== this.compareSeq) return;
         this.result = res;
       } catch (e) {
+        if (mySeq !== this.compareSeq) return;
         const msg = e instanceof Error ? e.message : String(e);
         this.errorMessage = msg;
       } finally {
-        this.loading = false;
-        this.progress = null;
+        if (mySeq === this.compareSeq) {
+          this.loading = false;
+          this.progress = null;
+        }
       }
     },
   },

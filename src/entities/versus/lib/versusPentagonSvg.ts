@@ -45,5 +45,5 @@ export function buildVersusPentagonSvg(yVals: number[], oVals: number[]): string
   for (const pt of op) {
     inner += `<circle cx="${pt[0]}" cy="${pt[1]}" r="3" fill="rgb(var(--v-theme-warning))" stroke="rgb(var(--v-theme-surface))" stroke-width="1.5"/>`;
   }
-  return `<svg width="180" height="180" viewBox="0 0 180 180">${inner}</svg>`;
+  return `<svg width="100%" height="100%" viewBox="0 0 180 180" preserveAspectRatio="xMidYMid meet">${inner}</svg>`;
 }

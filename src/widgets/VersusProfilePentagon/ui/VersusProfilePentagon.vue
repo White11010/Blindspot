@@ -125,7 +125,15 @@ function rounded(v: number): number {
   font-variant-numeric: tabular-nums;
 }
 
+.versus-pentagon-host {
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1 / 1;
+}
+
 .versus-pentagon-host :deep(svg) {
   display: block;
+  width: 100%;
+  height: 100%;
 }
 </style>
