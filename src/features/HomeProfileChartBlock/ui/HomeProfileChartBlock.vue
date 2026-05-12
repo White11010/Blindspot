@@ -50,17 +50,21 @@
           </div>
         </div>
 
-        <v-alert
-          v-if="!payload.player"
-          density="compact"
-          variant="tonal"
-          type="info"
-          class="mb-4"
-          :text="String(t('home.profileChartLowSample', { n: payload.sampleSize }))"
-        />
-
         <v-row dense class="home-profile-card__layout">
-          <v-col cols="12" lg="8" class="d-flex justify-center align-center overflow-visible">
+          <v-col
+            cols="12"
+            lg="8"
+            class="d-flex justify-center align-center overflow-visible home-profile-radar-col"
+          >
+            <!-- Алерт лежит абсолютно поверх «пустого» верха радар-колонки, чтобы не растягивать карточку. -->
+            <v-alert
+              v-if="!payload.player"
+              density="compact"
+              variant="tonal"
+              type="info"
+              class="home-profile-low-sample-alert"
+              :text="String(t('home.profileChartLowSample', { n: payload.sampleSize }))"
+            />
             <!-- ApexCharts Radar: stroke.width must be a number; arrays break radius (NaN) and collapse labels. -->
             <div ref="radarWrapRef" class="home-profile-radar-wrap w-100 d-flex justify-center">
               <!-- width/height не привязываем к ResizeObserver: vue3-apexcharts при их смене делает destroy() и ловит гонку с async init -->
@@ -563,6 +567,19 @@ const chartOptions = computed((): ApexOptions => {
 .home-profile-card__layout {
   flex: 1 1 auto;
   min-height: 0;
+}
+
+.home-profile-radar-col {
+  position: relative;
+}
+
+.home-profile-low-sample-alert {
+  position: absolute;
+  top: 0;
+  left: 8px;
+  right: 8px;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .home-profile-metrics {

@@ -7,8 +7,8 @@
         <home-profile-chart-block class="h-100 w-100" />
       </v-col>
       <v-col cols="12" class="home-dashboard__col-split pa-0 d-flex flex-column">
-        <div class="home-dashboard__stack flex-grow-1">
-          <div class="home-dashboard__stack-item">
+        <div class="home-dashboard__stack">
+          <div class="home-dashboard__stack-item home-dashboard__stack-item--grow">
             <home-top-insight-block />
           </div>
           <div class="home-dashboard__stack-item">
