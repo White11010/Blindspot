@@ -7,11 +7,11 @@
         <home-profile-chart-block class="h-100 w-100" />
       </v-col>
       <v-col cols="12" class="home-dashboard__col-split pa-0 d-flex flex-column">
-        <div class="home-dashboard__stack">
+        <div class="home-dashboard__stack flex-grow-1">
           <div class="home-dashboard__stack-item">
             <home-top-insight-block />
           </div>
-          <div class="home-dashboard__stack-item home-dashboard__stack-item--grow">
+          <div class="home-dashboard__stack-item">
             <home-last-game class="flex-grow-1" />
           </div>
         </div>
@@ -94,7 +94,7 @@ import { HomeTopInsightBlock } from '@/features/HomeTopInsightBlock';
   }
 
   .home-dashboard__stack-item--grow {
-    flex: 1 1 auto;
+    flex: 1;
     min-height: min-content;
   }
 }

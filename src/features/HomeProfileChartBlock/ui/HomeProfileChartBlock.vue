@@ -80,7 +80,7 @@
             <div class="home-profile-metrics ps-lg-2">
               <div v-for="row in metricRows" :key="row.key" class="home-profile-metric-row">
                 <div class="text-overline text-medium-emphasis">{{ row.label }}</div>
-                <div class="text-h6 font-weight-bold mb-1" :style="{ color: row.accentRgb }">
+                <div class="text-h6 font-weight-bold mb-1" :class="row.valueClass">
                   {{ row.displayPlayer }}
                 </div>
                 <v-progress-linear
@@ -339,23 +339,13 @@ const accentHexList = computed(() =>
   ACCENT_NAMES.map((n) => themeHex(n) ?? themeHex('secondary') ?? '#888888'),
 );
 
-function accentRgb(hex: string): string {
-  if (!hex.startsWith('#') || hex.length < 7) {
-    return 'rgb(var(--v-theme-secondary))';
-  }
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgb(${r}, ${g}, ${b})`;
-}
-
 const metricRows = computed(() => {
   const d = payload.value;
   if (!d) {
     return [];
   }
   const bench = d.benchmark;
-  return METRIC_ORDER.map((key, i) => {
+  return METRIC_ORDER.map((key) => {
     const label =
       key === 'accuracy'
         ? t('home.profileMetric.accuracy')
@@ -385,21 +375,23 @@ const metricRows = computed(() => {
     let deltaFormatted = String(t('common.emDash'));
     let deltaClass = 'text-medium-emphasis';
     let barColor: 'success' | 'error' | 'outline' = 'outline';
+    let valueClass = '';
     if (pvRaw != null && hasPlayer) {
       const diff = Math.round(Number(pvRaw) - bv);
       deltaFormatted = diff > 0 ? `+${diff}` : String(diff);
       if (diff > 0) {
         deltaClass = 'text-success';
         barColor = 'success';
+        valueClass = 'text-success';
       } else if (diff < 0) {
         deltaClass = 'text-error';
         barColor = 'error';
+        valueClass = 'text-error';
       } else {
         deltaClass = 'text-medium-emphasis';
         barColor = 'outline';
       }
     }
-    const hex = accentHexList.value[i]!;
 
     return {
       key,
@@ -410,7 +402,7 @@ const metricRows = computed(() => {
       barColor,
       deltaFormatted,
       deltaClass,
-      accentRgb: accentRgb(hex),
+      valueClass,
     };
   });
 });
