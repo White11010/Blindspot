@@ -3,7 +3,7 @@
     <h3 class="text-overline text-medium-emphasis mb-2">{{ t('versusPage.conclusion') }}</h3>
     <v-row class="mb-6">
       <v-col cols="12" md="6">
-        <v-card variant="outlined" class="h-100 versus-conc-you">
+        <v-card class="h-100 versus-conc-you">
           <v-card-title class="d-flex align-center ga-2 text-subtitle-1">
             <v-icon icon="mdi-circle" size="12" color="primary" />
             {{ slice.selfSide.username }}
@@ -29,7 +29,7 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="6">
-        <v-card variant="outlined" class="h-100 versus-conc-opp">
+        <v-card class="h-100 versus-conc-opp">
           <v-card-title class="d-flex align-center ga-2 text-subtitle-1">
             <v-icon icon="mdi-circle" size="12" color="warning" />
             {{ slice.opponentSide.username }}
@@ -62,10 +62,7 @@
 // Composite widget: presents a focused dashboard block; reads shared Pinia stores and Tauri invoke where needed.
 
 import type { VersusSpeedSlice } from '@/entities/versus';
-import {
-  buildConclusionsOpp,
-  buildConclusionsYou,
-} from '@/entities/versus/lib/versusConclusions';
+import { buildConclusionsOpp, buildConclusionsYou } from '@/entities/versus/lib/versusConclusions';
 import { useI18n } from '@/shared/lib/i18n';
 import { computed } from 'vue';
 

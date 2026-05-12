@@ -1,20 +1,17 @@
 <template>
   <div class="d-flex flex-column flex-sm-row align-stretch align-sm-center ga-2 mb-4">
-    <span class="text-body-2 text-medium-emphasis flex-shrink-0 align-self-center">
-      {{ t('versusPage.speedFilterLabel') }}
-    </span>
     <v-btn-toggle
       :model-value="versusStore.selectedSpeed"
+      class="d-flex flex-wrap"
       mandatory
-      density="compact"
+      base-color="secondary"
       variant="outlined"
-      color="secondary"
-      class="versus-speed flex-shrink-0"
+      density="compact"
       @update:model-value="onSpeed"
     >
-      <v-btn value="bullet" size="small">{{ t('myGames.speed.bullet') }}</v-btn>
-      <v-btn value="blitz" size="small">{{ t('myGames.speed.blitz') }}</v-btn>
-      <v-btn value="rapid" size="small">{{ t('myGames.speed.rapid') }}</v-btn>
+      <v-btn value="bullet">{{ t('myGames.speed.bullet') }}</v-btn>
+      <v-btn value="blitz">{{ t('myGames.speed.blitz') }}</v-btn>
+      <v-btn value="rapid">{{ t('myGames.speed.rapid') }}</v-btn>
     </v-btn-toggle>
   </div>
 </template>

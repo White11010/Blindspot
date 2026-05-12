@@ -61,10 +61,11 @@
       </v-row>
     </template>
     <v-divider />
-    <v-card-actions class="text-caption text-medium-emphasis px-4 py-3 bg-surface-variant">
+    <v-alert class="mt-6" variant="tonal" type="info" :text="t('versusPage.gpFooterHint')" />
+    <!-- <v-card-actions class="text-caption text-medium-emphasis px-4 py-3 bg-surface-variant">
       <v-icon icon="mdi-lightbulb-outline" size="small" class="me-2 flex-shrink-0" />
       <span>{{ t('versusPage.gpFooterHint') }}</span>
-    </v-card-actions>
+    </v-card-actions> -->
   </v-card>
 </template>
 

@@ -10,13 +10,7 @@
       {{ label }}
     </v-chip>
     <div v-if="!entries.length" class="text-caption text-medium-emphasis">—</div>
-    <v-card
-      v-for="(e, i) in entries"
-      :key="i"
-      variant="outlined"
-      density="compact"
-      class="pa-3"
-    >
+    <v-card v-for="(e, i) in entries" :key="i" variant="outlined" density="compact" class="pa-3">
       <div class="text-body-2 font-weight-medium">{{ e.title }}</div>
       <div class="text-caption text-medium-emphasis mt-1">{{ e.subtitle }}</div>
     </v-card>

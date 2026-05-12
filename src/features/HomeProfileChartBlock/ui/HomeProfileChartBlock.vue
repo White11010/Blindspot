@@ -17,7 +17,7 @@
         class="d-flex flex-wrap"
         mandatory
         base-color="secondary"
-        variant="text"
+        variant="outlined"
         density="compact"
       >
         <v-btn value="bullet">{{ t('myGames.speed.bullet') }}</v-btn>

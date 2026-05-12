@@ -3,7 +3,7 @@
     <h3 class="text-overline text-medium-emphasis mb-2">{{ t('versusPage.openingPrefs') }}</h3>
     <v-row class="mb-6">
       <v-col cols="12" md="6">
-        <v-card variant="outlined" class="h-100">
+        <v-card class="h-100">
           <v-card-title class="text-subtitle-2 text-primary pb-0">
             {{ t('versusPage.colYou') }}
           </v-card-title>
@@ -26,7 +26,7 @@
         </v-card>
       </v-col>
       <v-col cols="12" md="6">
-        <v-card variant="outlined" class="h-100">
+        <v-card class="h-100">
           <v-card-title class="text-subtitle-2 text-warning pb-0">
             {{ slice.opponentSide.username }}
           </v-card-title>
