@@ -72,7 +72,7 @@
                 <GameEvalHistory :analysis="analysis" class="game-details-analysis__chart" />
                 <div class="game-details-side-stack">
                   <GamePatternsAndSystem :analysis="analysis" />
-                  <GameKeyMoments :analysis="analysis" class="flex-grow-1" />
+                  <GameKeyMoments :analysis="analysis" />
                 </div>
               </div>
             </div>
@@ -247,7 +247,12 @@ function onRunFailed(message: string) {
   gap: 24px;
   flex: 1;
   min-height: 400px;
-  align-items: stretch;
+  align-items: start;
+}
+
+.game-details-analysis__chart {
+  height: 100%;
+  align-self: stretch;
 }
 
 .game-details-side-stack {
@@ -255,6 +260,7 @@ function onRunFailed(message: string) {
   flex-direction: column;
   gap: 20px;
   min-height: 0;
+  align-self: start;
 }
 
 @media (max-width: 1280px) {

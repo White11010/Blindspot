@@ -9,8 +9,8 @@
       <apexchart
         v-if="series[0].data.length"
         type="line"
-        class="flex-grow-1"
-        :height="chartHeight"
+        class="flex-grow-1 game-eval-history__chart"
+        height="100%"
         :options="chartOptions"
         :series="series"
       />
@@ -39,8 +39,6 @@ const props = defineProps<{
 
 const { t } = useI18n();
 const theme = useTheme();
-
-const chartHeight = '400px';
 
 const isDark = computed(() => theme.global.current.value.dark);
 const textColor = computed(() => theme.current.value.colors['on-surface']);
@@ -93,5 +91,9 @@ const chartOptions = computed(() => ({
 <style scoped lang="scss">
 .game-eval-history__body {
   min-height: 280px;
+}
+
+.game-eval-history__chart {
+  min-height: 0;
 }
 </style>

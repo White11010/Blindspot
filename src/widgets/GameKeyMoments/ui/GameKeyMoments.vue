@@ -1,11 +1,11 @@
 <template>
-  <v-card class="h-100 d-flex flex-column game-key-moments">
+  <v-card class="game-key-moments">
     <v-card-item class="pb-0">
       <v-card-title class="text-subtitle-1 font-weight-semibold pa-0">
         {{ t('analysis.keyMomentsTitle') }}
       </v-card-title>
     </v-card-item>
-    <v-card-text class="flex-grow-1 overflow-y-auto">
+    <v-card-text>
       <v-alert v-if="!analysis.key_moments.length" type="info" variant="tonal">
         {{ t('analysis.keyMomentsEmpty') }}
       </v-alert>
